@@ -1,7 +1,7 @@
 # app.py
 import streamlit as st
-from .database import get_db_session
-from .user import cadastrar_usuario, verifica_usuario
+from database import get_db_session
+from user import cadastrar_usuario, verifica_usuario
 
 # Inicializa a sessão
 if 'logged_in' not in st.session_state:

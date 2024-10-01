@@ -1,6 +1,6 @@
 # user.py
 from sqlalchemy.orm import Session
-from .models import Usuario
+from models import Usuario
 
 def cadastrar_usuario(db: Session, nome: str, senha: str):
     """Cadastra um novo usuário no banco de dados."""
