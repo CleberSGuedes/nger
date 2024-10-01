@@ -1,0 +1,30 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Ambiente virtual
+venv/
+env/
+ENV/
+.venv/
+
+# Arquivos de configuração de IDEs
+.idea/
+*.sublime-workspace
+*.sublime-project
+.vscode/
+
+# Arquivos de log
+*.log
+
+# Arquivos de banco de dados
+*.sqlite3
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+
+# Arquivos de distribuição
+*.egg-info/
+dist/
+build/
