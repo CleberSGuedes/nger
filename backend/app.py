@@ -23,7 +23,7 @@ EMAIL_ADDRESS = os.getenv('EMAIL_ADDRESS')
 EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
 
 # Inicialização do Flask
-app = Flask(__name__, template_folder='../frontend')
+app = Flask(__name__, template_folder='../frontend', static_folder='../frontend')
 
 # Função para enviar e-mail de redefinição de senha
 def enviar_email(destinatario, nova_senha):
@@ -66,11 +66,16 @@ def login():
     db_session = get_db_session()
     try:
         if verificar_usuario(db_session, usuario, senha):
-            return jsonify({"status": "success", "message": "Login bem-sucedido!"}), 200
+            return jsonify({"status": "success", "message": "Login bem-sucedido!", "redirect": "/index"}), 200
         else:
             return jsonify({"status": "error", "message": "Nome de usuário ou senha incorretos."}), 401
     finally:
         db_session.close()
+
+# Rota para a página inicial após o login
+@app.route('/index', methods=['GET'])
+def index():
+    return render_template('index.html')  # Página inicial
 
 # Rota para registro de usuários
 @app.route('/register', methods=['POST'])

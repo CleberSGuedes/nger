@@ -1,46 +1,51 @@
-<!-- frontend/login.html -->
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Página de Login</title>
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block title %}Página de Login{% endblock %}
+
+{% block content %}
+<div class="login-container">
     <h1>Login</h1>
-    <form id="loginForm">
+    <form id="loginForm" class="login-form">
         <label for="usuario">Usuário:</label>
         <input type="text" id="usuario" name="usuario" required>
-        <br>
+
         <label for="senha">Senha:</label>
         <input type="password" id="senha" name="senha" required>
-        <br>
-        <button type="submit">Login</button>
+
+        <div class="login-actions">
+            <button type="submit">Login</button>
+            <a href="/esqueci-senha">Esqueci a senha</a>
+        </div>
     </form>
-    
-    <!-- Link atualizado para a página "Esqueci a Senha" -->
-    <p><a href="/esqueci-senha">Esqueci a senha</a></p>
+    <p id="login-msg"></p>
+</div>
 
-    <script>
-        document.getElementById('loginForm').onsubmit = async (event) => {
-            event.preventDefault();
-            const usuario = document.getElementById('usuario').value;
-            const senha = document.getElementById('senha').value;
+<script>
+    document.getElementById('loginForm').onsubmit = async (event) => {
+        event.preventDefault();
+        const usuario = document.getElementById('usuario').value;
+        const senha = document.getElementById('senha').value;
+        const messageElement = document.getElementById('login-msg');
 
-            const response = await fetch('/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ usuario, senha })
-            });
+        const response = await fetch('/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ usuario, senha })
+        });
 
-            const result = await response.json();
-            alert(result.message);
-            if (response.ok) {
-                // Redirecione ou faça outra ação após login bem-sucedido
-            }
-        };
-    </script>
-</body>
-</html>
+        const result = await response.json();
+        messageElement.textContent = result.message;
+
+        if (response.ok) {
+            messageElement.style.color = 'green';
+            setTimeout(() => {
+                window.location.href = result.redirect; // Redirecionar para a página inicial
+            }, 1000);
+        } else {
+            messageElement.style.color = 'red';
+        }
+    };
+</script>
+{% endblock %}

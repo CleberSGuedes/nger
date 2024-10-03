@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Título Padrão{% endblock %}</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='css/favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/javascript.js') }}" defer></script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <!-- Aqui está o banner -->
+            <div class="banner">
+                <img src="{{ url_for('static', filename='css/banner2.jpg') }}" alt="Banner do Sistema que simboliza a Educação" loading="lazy">
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        <div class="container footer-content">
+            <p class="footer-text">&copy; 2024 - SISTEMA NGER SEDUC-MT - Elaborado por Cleber S. Guedes - UENGE/SAGE/SEDUC</p>
+            <div class="logo-container">
+                <img src="{{ url_for('static', filename='css/Marca-Somos-Todos-Educação-[Azul].png') }}" alt="Logomarca da Educação" loading="lazy">
+                <img src="{{ url_for('static', filename='css/EducAção 10 anos.png') }}" alt="Logomarca do EducAção" loading="lazy">
+                <img src="{{ url_for('static', filename='css/Logo__SEDUC-MT___Horizontal_OK.png') }}" alt="Logomarca do SEDUC-MT" loading="lazy">
+            </div>
+        </div>
+    </footer>
+  
+      
+</body>
+</html>

@@ -1,43 +1,39 @@
-<!-- frontend/esqueci-senha.html -->
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Esqueci a Senha</title>
-    <link rel="stylesheet" href="css/styles.css"> <!-- Link para o CSS -->
-</head>
-<body>
-    <h1>Esqueci a Senha</h1>
-    <p>Insira seu e-mail para receber instruções sobre como redefinir sua senha:</p>
-    <form id="emailForm">
+{% extends "base.html" %}
+
+{% block title %}Esqueci a Senha{% endblock %}
+
+{% block content %}
+<h1>Esqueci a Senha</h1>
+<p>Insira seu e-mail para receber instruções sobre como redefinir sua senha:</p>
+<div class="forgot-password-container">
+    <form id="emailForm" class="forgot-password-form">
         <label for="email">E-mail:</label>
         <input type="email" id="email" name="email" required>
-        <br>
-        <button type="submit">Enviar</button>
+        <div class="forgot-password-actions">
+            <button type="submit">Enviar</button>
+        </div>
     </form>
-    <p><a href="/">Voltar para o Login</a></p> <!-- Link para voltar ao login -->
-    
-    <script>
-        document.getElementById('emailForm').onsubmit = async (event) => {
-            event.preventDefault();
-            const email = document.getElementById('email').value;
+    <p><a href="/">Voltar para o Login</a></p>
+</div>
 
-            const response = await fetch('/send_email', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email })
-            });
+<script>
+    document.getElementById('emailForm').onsubmit = async (event) => {
+        event.preventDefault();
+        const email = document.getElementById('email').value;
 
-            const result = await response.json();
-            alert(result.message);
-            if (response.ok) {
-                // Redirecione ou faça outra ação após envio bem-sucedido
-                // Opção: redirecionar para a página de login
-            }
-        };
-    </script>
-</body>
-</html>
+        const response = await fetch('/send_email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email })
+        });
+
+        const result = await response.json();
+        alert(result.message);
+        if (response.ok) {
+            window.location.href = "/"; // Redireciona para a página de login após o envio bem-sucedido
+        }
+    };
+</script>
+{% endblock %}

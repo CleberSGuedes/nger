@@ -1,22 +1,8 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistemanger</title>
-    <link rel="stylesheet" href="css/styles.css">
-</head>
-<body>
-    <h1>Bem-vindo ao Sistemanger</h1>
+{% extends "base.html" %}
 
-    <div id="login">
-        <h2>Login</h2>
-        <input type="text" id="usuario" placeholder="Nome de Usuário">
-        <input type="password" id="senha" placeholder="Senha">
-        <button onclick="login()">Entrar</button>
-        <p id="login-msg"></p>
-    </div>
+{% block title %}Sistema NGER-SEDUC/MT{% endblock %}
 
-    <script src="js/app.js"></script>
-</body>
-</html>
+{% block content %}
+    <h1>Bem-vindo ao Sistema NGER-SEDUC/MT</h1>
+    <p>Em desenvolvimento</p>
+{% endblock %}
