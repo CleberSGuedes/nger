@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/style.css"> <!-- Link para seu CSS personalizado -->
+    <title>Página Inicial</title>
+    <script>
+        function updateTime() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            document.getElementById('date-time').innerText = now.toLocaleString('pt-BR', options);
+        }
+        setInterval(updateTime, 1000);
+        
+        $(document).ready(function () {
+            $('.nav-link').click(function () {
+                const target = $(this).next('.collapse');
+                if (target.length) {
+                    target.collapse('toggle');
+                    return false; // Previne a navegação se houver submenu
+                }
+            });
+        });
+    </script>
+</head>
+<body onload="updateTime()">
+    <div class="sidebar p-3">
+        <h4>MeuApp</h4>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="#">Início</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#submenu1" data-toggle="collapse">Sobre</a>
+                <ul class="collapse" id="submenu1">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Nossa História</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Missão e Visão</a>
+                    </li>
+                </ul>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#submenu2" data-toggle="collapse">Serviços</a>
+                <ul class="collapse" id="submenu2">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Serviço 1</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Serviço 2</a>
+                    </li>
+                </ul>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('logout') }}">Sair</a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <nav class="navbar navbar-light bg-light">
+            <span class="navbar-brand mb-0 h1">Sistema NGER-SEDUC/MT</span>
+            <div class="text-right">
+                <span id="user-info">Usuário: {{ user.email }}</span><br>
+                <span id="date-time"></span>
+            </div>
+        </nav>
+
+        <header class="bg-primary text-white text-center py-4">
+            <h1>Bem-vindo ao Sistema NGER-SEDUC/MT</h1>
+        </header>
+
+        <div class="container mt-4">
+            <!-- <h2>Conteúdo Principal</h2>
+            <p>Em desenvolvimento.</p> -->
+            <!-- Painel do Power BI -->
+            <div class="embed-responsive embed-responsive-16by9">
+                <iframe title="Painéis SAGE" class="embed-responsive-item" src="https://app.powerbi.com/view?r=eyJrIjoiMDVmZmI2YTAtZmJkYi00MjRjLThhMTYtNTU2NzNhYTQ1NThiIiwidCI6ImQ1MGZhZTcwLWM5ZjQtNGEzMS04OGJkLTJkZjAzOTQyMDc3NSJ9" frameborder="0" allowFullScreen="true"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

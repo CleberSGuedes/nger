@@ -1,0 +1,6 @@
+
+Flask==2.1.2
+pandas==1.4.3
+SQLAlchemy==1.4.36
+PyMySQL==1.0.2
+Flask-Login==0.6.2
