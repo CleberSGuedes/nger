@@ -14,72 +14,75 @@
             const year = String(now.getFullYear()).slice(-2); // Últimos dois dígitos do ano
             document.getElementById('date').innerText = `${day}/${month}/${year}`;
         }
-        setInterval(updateDate, 1000); // Atualiza a data a cada segundo, mas você pode alterar para apenas quando a página é carregada
         
-        $(document).ready(function () {
-            $('.nav-link').click(function () {
-                const target = $(this).next('.collapse');
-                if (target.length) {
-                    target.collapse('toggle');
-                    return false; // Previne a navegação se houver submenu
-                }
-            });
-        });
+        window.onload = function() {
+            updateDate();
+        };
+        
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+        }
     </script>
 </head>
-<body onload="updateDate()">
-    <div class="sidebar p-3">
-        <h4>MeuApp</h4>
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link active" href="#">Início</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#submenu1" data-toggle="collapse">Sobre</a>
-                <ul class="collapse" id="submenu1">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Nossa História</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Missão e Visão</a>
-                    </li>
-                </ul>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#submenu2" data-toggle="collapse">Serviços</a>
-                <ul class="collapse" id="submenu2">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Serviço 1</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Serviço 2</a>
-                    </li>
-                </ul>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('logout') }}">Sair</a>
-            </li>
-        </ul>
-    </div>
+<body>
+    <div class="d-flex">
+        <div class="sidebar p-3" id="sidebar">
+            <button class="btn btn-primary" onclick="toggleSidebar()" style="margin-bottom: 10px;">
+                <span class="navbar-toggler-icon"></span> <!-- Ícone de três riscos -->
+            </button>
+            <h4>MeuApp</h4>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#">Início</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#submenu1" data-toggle="collapse">Sobre</a>
+                    <ul class="collapse" id="submenu1">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Nossa História</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Missão e Visão</a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#submenu2" data-toggle="collapse">Serviços</a>
+                    <ul class="collapse" id="submenu2">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Serviço 1</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Serviço 2</a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('logout') }}">Sair</a>
+                </li>
+            </ul>
+        </div>
 
-    <div class="main-content">
-        <nav class="navbar navbar-light bg-light">
-            <span class="navbar-brand mb-0 h1">Sistema NGER-SEDUC/MT</span>
-            <div class="text-right">
-                <span id="user-info">Usuário: {{ user.nome }} - </span> <!-- Alterado para exibir o nome -->
-                <span id="date"></span> <!-- Apenas a data, formatada -->
+        <div class="main-content flex-grow-1">
+            <nav class="navbar navbar-light bg-light">
+                <span class="navbar-brand mb-0 h1">Sistema NGER-SEDUC/MT</span>
+                <div class="text-right">
+                    <span id="user-info">Usuário: {{ user.nome }} - </span> <!-- Alterado para exibir o nome -->
+                    <span id="date"></span> <!-- Apenas a data, formatada -->
+                </div>
+            </nav>
+
+            <header class="text-white text-center py-4" style="background-color: #007b7f;">
+                <h1>Bem-vindo ao Sistema NGER-SEDUC/MT</h1>
+            </header>
+
+            <div class="container mt-4">
+                <!-- Painel do Power BI -->
+                <!-- <div class="embed-responsive embed-responsive-16by9">
+                    <iframe title="Painéis SAGE" class="embed-responsive-item" src="https://app.powerbi.com/view?r=eyJrIjoiMDVmZmI2YTAtZmJkYi00MjRjLThhMTYtNTU2NzNhYTQ1NThiIiwidCI6ImQ1MGZhZTcwLWM5ZjQtNGEzMS04OGJkLTJkZjAzOTQyMDc3NSJ9" frameborder="0" allowFullScreen="true"></iframe>
+                </div> -->
             </div>
-        </nav>
-
-        <header class="bg-primary text-white text-center py-4">
-            <h1>Bem-vindo ao Sistema NGER-SEDUC/MT</h1>
-        </header>
-
-        <div class="container mt-4">
-            <!-- Painel do Power BI
-            <div class="embed-responsive embed-responsive-16by9">
-                <iframe title="Painéis SAGE" class="embed-responsive-item" src="https://app.powerbi.com/view?r=eyJrIjoiMDVmZmI2YTAtZmJkYi00MjRjLThhMTYtNTU2NzNhYTQ1NThiIiwidCI6ImQ1MGZhZTcwLWM5ZjQtNGEzMS04OGJkLTJkZjAzOTQyMDc3NSJ9" frameborder="0" allowFullScreen="true"></iframe>
-            </div> -->
         </div>
     </div>
 
