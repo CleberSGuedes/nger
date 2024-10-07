@@ -10,8 +10,9 @@ class User(Base, UserMixin):  # Adicionando UserMixin
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True)
-    email = Column(String, unique=True, nullable=False)
-    password = Column(String, nullable=False)
+    nome = Column(String(100), nullable=False)  # Adicionando o campo nome
+    email = Column(String(100), unique=True, nullable=False)
+    password = Column(String(255), nullable=False)
 
     def set_password(self, password):
         self.password = generate_password_hash(password)

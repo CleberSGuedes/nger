@@ -42,7 +42,6 @@ def login():
         user = session.query(User).filter_by(email=email).first()
         if user and check_password_hash(user.password, password):
             login_user(user)  # Loga o usuário
-            # flash('Login feito com sucesso!', 'success')
             return redirect(url_for('home'))
         else:
             flash('E-mail ou senha incorretos.', 'error')  # Mensagem de erro
@@ -121,10 +120,11 @@ def reset_password(token):
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
+        nome = request.form['nome']  # Coletando o nome do formulário
         email = request.form['email']
         password = request.form['password']
         
-        new_user = User(email=email)
+        new_user = User(nome=nome, email=email)  # Adicionando o nome aqui
         new_user.set_password(password)
         
         session.add(new_user)
