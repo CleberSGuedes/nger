@@ -1,43 +1,27 @@
+/* Estilo geral */
 body {
     font-family: Arial, sans-serif;
-    background-color: #f4f4f4; /* Mantenha um fundo neutro */
+    background-color: #f4f4f4;
     margin: 0;
     padding: 0;
+    font-size: 12px;
 }
 
-.sidebar {
-    min-width: 250px;
-    max-width: 250px;
-    background-color: #007b7f; /* Azul petróleo */
-    border-right: 1px solid #005755; /* Tom mais escuro para a borda */
-    height: 100vh;
-    position: fixed;
-    transition: width 0.3s;
-    color: white; /* Texto em branco para contraste */
-}
-
-.sidebar.collapsed {
-    width: 60px; /* Largura quando colapsado */
-}
-
-.sidebar.collapsed .nav-link {
-    justify-content: center; /* Centraliza o texto no colapsado */
-    overflow: hidden; /* Esconde o texto quando colapsado */
-}
-
+/* Conteúdo principal */
 .main-content {
     margin-left: 250px;
     padding: 20px;
     overflow-y: auto;
-    width: calc(100% - 250px);
-    font-size: 12px;
     transition: margin-left 0.3s;
+    width: calc(100% - 250px);
 }
 
-.sidebar.collapsed + .main-content {
-    margin-left: 60px; /* Ajuste à largura do menu colapsado */
+.main-content.collapsed {
+    margin-left: 60px; /* Ajuste do conteúdo principal ao colapsar a sidebar */
+    width: calc(100% - 60px);
 }
 
+/* Estilo para Containers */
 .container {
     width: 100%;
     margin: auto;
@@ -48,6 +32,7 @@ body {
     margin-top: 50px;
 }
 
+/* Estilo para Containers do login */
 .containerlogin {
     width: 300px;
     margin: auto;
@@ -58,6 +43,7 @@ body {
     margin-top: 50px;
 }
 
+/* Estilo de Formulário */
 h2 {
     text-align: center;
     color: #333;
@@ -77,6 +63,7 @@ input[type="password"] {
     border-radius: 4px;
 }
 
+/* Botões */
 button {
     width: 100%;
     padding: 10px;
@@ -88,9 +75,10 @@ button {
 }
 
 button:hover {
-    background-color: #003e3e; /* Azul petróleo ainda mais escuro ao passar o mouse */
+    background-color: #003e3e; /* Azul petróleo mais escuro ao passar o mouse */
 }
 
+/* Links */
 a {
     display: block;
     text-align: center;
@@ -99,8 +87,7 @@ a {
     text-decoration: none;
 }
 
-header {
-    margin-bottom: 20px;
-    background-color: #007b7f; /* Cabeçalho azul petróleo */
-    color: white; /* Texto branco no cabeçalho */
+/* Estilo de Ícone */
+i {
+    font-size: 15px;
 }
