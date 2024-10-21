@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.5.0/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="static/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <title>Página Inicial</title>
     
     <style>
@@ -32,6 +32,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
             transition: all 0.3s ease;
+            cursor: pointer; /* Muda o cursor para mãozinha */
         }
 
         .sidebar .nav-link i {
@@ -67,7 +68,6 @@
             margin-bottom: 1rem;
             width: auto; /* Ajustar largura para ser apenas o tamanho do ícone */
         }
-
     </style>
 
     <script>
@@ -113,14 +113,20 @@
                 <li class="nav-item">
                     <a class="nav-link" href="#submenu2" data-toggle="collapse" aria-expanded="false" aria-controls="submenu2">
                         <i class="bi bi-briefcase"></i>
-                        <span>Serviços</span>
+                        <span>Cadastro</span>
                     </a>
                     <ul class="collapse" id="submenu2">
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Serviço 1</a>
+                            <a class="nav-link load-page" data-page="{{ url_for('register') }}">
+                                <i class="bi bi-person-plus"></i>
+                                <span>Usuário</span>
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Serviço 2</a>
+                            <a class="nav-link load-page" data-page="{{ url_for('add_profile') }}">
+                                <i class="bi bi-person-badge"></i>
+                                <span>Perfil</span>
+                            </a>
                         </li>
                     </ul>
                 </li>
@@ -150,10 +156,33 @@
             <div class="container mt-4">
                 <!-- Conteúdo principal -->
                 <img src="{{ url_for('static', filename='imagens/unnamed.jpg') }}" alt="Em desenvolvimento" class="centered-image">
-
+                
+                <div id="main-content">
+                    <!-- O conteúdo das páginas será carregado aqui -->
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Incluindo apenas uma versão do jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+       $(document).on('click', '.load-page', function(event) {
+           event.preventDefault(); // Evita o comportamento padrão do link
+           var page = $(this).data('page');
+           
+           console.log("Clicou em:", $(this).text(), "| URL:", page); // Console log para saber qual submenu foi clicado
+           
+           // Carrega o conteúdo HTML na div main-content
+           $('#main-content').load(page, function(response, status, xhr) {
+               if (status === "error") {
+                   var msg = "Sorry but there was an error: ";
+                   $("#main-content").html(msg + xhr.status + " " + xhr.statusText);
+               }
+           });
+       });
+    </script>
+    
     <script>
         // Função para exibir a data no formato desejado
         function displayDate() {
@@ -168,7 +197,6 @@
         window.onload = displayDate;
     </script>
     
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>

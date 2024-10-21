@@ -47,6 +47,7 @@ body {
 h2 {
     text-align: center;
     color: #333;
+    font-size: 24px; /* Definindo a fonte para 12px */
 }
 
 label {

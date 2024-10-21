@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.5.0/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Cadastro de Perfil</title>
+</head>
+<body>
+    <div class="containerlogin"> <!-- Usando a classe containerlogin -->
+        <h2>Cadastro de Perfil</h2>
+        <form method="POST" action="{{ url_for('add_profile') }}"> <!-- Action para a rota correta -->
+            <div class="form-group">
+                <label for="name">Nome do Perfil</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="level">Nível</label>
+                <input type="number" class="form-control" id="level" name="level" min="0" required>
+            </div>
+            <button type="submit" class="button">Cadastrar Perfil</button>
+        </form>
+    </div>
+</body>
+</html>
