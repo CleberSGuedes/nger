@@ -11,7 +11,7 @@
     <style>
         /* Sidebar */
         .sidebar {
-            width: 250px;
+            width: 150px;
             background-color: #007b7f;
             color: white;
             height: 100vh;
@@ -68,15 +68,6 @@
             width: auto; /* Ajustar largura para ser apenas o tamanho do ícone */
         }
 
-        /* Conteúdo Principal */
-        .main-content {
-            margin-left: 250px;
-            transition: margin-left 0.3s ease;
-        }
-
-        .main-content.collapsed {
-            margin-left: 60px;
-        }
     </style>
 
     <script>
@@ -97,7 +88,7 @@
             <button class="btn-toggle-sidebar" onclick="toggleSidebar()">
                 <i class="bi bi-list"></i>
             </button>
-            <h4>MeuApp</h4>
+            <h4>NGER</h4>
             <ul class="nav flex-column">
                 <li class="nav-item">
                     <a class="nav-link active" href="#">
@@ -158,6 +149,8 @@
 
             <div class="container mt-4">
                 <!-- Conteúdo principal -->
+                <img src="{{ url_for('static', filename='imagens/unnamed.jpg') }}" alt="Em desenvolvimento" class="centered-image">
+
             </div>
         </div>
     </div>
