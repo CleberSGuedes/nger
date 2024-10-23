@@ -1,8 +1,9 @@
-from flask import Flask, render_template, redirect, url_for, request, flash
+from flask import Flask, render_template, redirect, url_for, request, flash, jsonify  # Adicione 'jsonify'
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_mail import Mail, Message
+from sqlalchemy.orm import joinedload
 import os
 import secrets
 from datetime import datetime, timedelta
@@ -36,6 +37,8 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
     profile_id = db.Column(db.Integer, db.ForeignKey('profiles.id'))
+    
+    profile = db.relationship('Profile', backref='users', lazy=True)  # Relacionamento com Profile
 
 class Profile(db.Model):
     __tablename__ = 'profiles'
@@ -160,6 +163,7 @@ def add_profile():
         return redirect(url_for('home'))
     return render_template('add_profile.html')
 
+# Rota para usuário
 @app.route('/edit_user/<int:id>', methods=['GET', 'POST'])
 def edit_user(id):
     user = User.query.get_or_404(id)
@@ -167,8 +171,50 @@ def edit_user(id):
         user.name = request.form['name']
         user.email = request.form['email']
         db.session.commit()
-        return redirect(url_for('register'))
+        flash('Usuário atualizado com sucesso!')
+        return redirect(url_for('edit_user', id=user.id))
     return render_template('edit_user.html', user=user)
+
+# Rota para editar usuário com AJAX
+@app.route('/editar_user/<int:id>', methods=['GET', 'POST'])
+def editar_user(id):
+    user = User.query.get_or_404(id)
+    if request.method == 'POST':
+        user.nome = request.form['nome']
+        user.email = request.form['email']
+        user.profile_id = request.form['profile_id']
+        db.session.commit()
+        return jsonify(status='success')  # Retorna um JSON de sucesso
+
+    profiles = Profile.query.all()
+    return render_template('partials/editar_user.html', user=user, profiles=profiles)
+
+# Rota para buscar usuários
+@app.route('/search_user', methods=['GET'])
+def search_user():
+    query = request.args.get('query', '').strip()
+    
+    # Se houver um termo de busca, faz o filtro
+    if query:
+        users = User.query.join(Profile).filter(
+            (User.nome.ilike(f'%{query}%')) |
+            (User.email.ilike(f'%{query}%')) |
+            (Profile.name.ilike(f'%{query}%'))
+        ).all()
+    else:
+        users = User.query.options(joinedload(User.profile)).all()  # Carrega todos os usuários se não houver busca
+
+    return render_template('partials/user_table.html', users=users)
+
+# Rota para excluir usuário
+@app.route('/delete_user', methods=['POST'])
+def delete_user():
+    user_id = request.form['user_id']
+    user = User.query.get_or_404(user_id)
+    db.session.delete(user)
+    db.session.commit()
+    return {'status': 'success'}, 200
+
 
 @app.route('/edit_profile/<int:id>', methods=['GET', 'POST'])
 def edit_profile(id):

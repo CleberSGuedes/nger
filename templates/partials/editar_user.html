@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.5.0/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Editar Usuário</title>
+</head>
+<body>
+    <div class="containerlogin">
+        <h2>Editar Usuário</h2>
+        <form id="editForm" method="POST" action="{{ url_for('editar_user', id=user.id) }}">
+            <div class="form-group">
+                <label for="nome">Nome</label>
+                <input type="text" class="form-control" id="nome" name="nome" value="{{ user.nome }}" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+            </div>
+            <div class="form-group">
+                <label for="profile_id">Perfil</label>
+                <select class="form-control" id="profile_id" name="profile_id" required>
+                    {% for profile in profiles %}
+                    <option value="{{ profile.id }}" {% if profile.id == user.profile_id %}selected{% endif %}>{{ profile.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="button">Salvar Alterações</button>
+        </form>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $('#editForm').submit(function(event) {
+            event.preventDefault(); // Evita o redirecionamento padrão
+
+            var formData = $(this).serialize(); // Pega os dados do formulário
+
+            $.ajax({
+                url: $(this).attr('action'),  // Usa a URL do atributo action do formulário
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    if (response.status === 'success') {
+                        alert('Usuário atualizado com sucesso!');
+                        window.location.href = "/";  // Redireciona para a página home
+                    } else {
+                        alert('Erro ao atualizar o usuário.');
+                    }
+                },
+                error: function() {
+                    alert('Erro ao atualizar o usuário.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

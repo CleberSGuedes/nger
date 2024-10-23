@@ -43,6 +43,17 @@ body {
     margin-top: 50px;
 }
 
+/* Estilo para Containers do login */
+.containerconsultar {
+    width: 600px;
+    margin: auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-top: 50px;
+}
+
 /* Estilo de Formulário */
 h2 {
     text-align: center;
@@ -69,7 +80,7 @@ select {
 
 /* Botões */
 button {
-    width: 100%;
+    width: 150px;
     padding: 10px;
     background-color: #005f5f; /* Azul petróleo escuro */
     color: white;
@@ -118,4 +129,85 @@ textarea,
 select,
 button {
     font-size: 12px !important; /* Tamanho da fonte aplicado a todos os formulários */
+}
+
+.form-control-lg {
+    border-radius: 0.25rem;
+    padding: 10px 20px;
+    font-size: 1.2rem;
+    height: 40px; /* Altura fixa */
+}
+
+.btn-lg {
+    padding: 10px 20px;
+    font-size: 1.2rem;
+    border-radius: 0.25rem;
+    height: 40px; /* Altura igual ao campo de input */
+    background-color: #006666; /* Azul petróleo */
+    color: white;
+    border: none;
+}
+
+.form-row {
+    justify-content: flex-start; /* Alinhar ambos ao topo */
+}
+
+.align-top {
+    vertical-align: top; /* Forçar o botão a alinhar pelo topo */
+}
+
+/* Estilos para a tabela */
+.table-custom {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    background-color: #f5f5f5;
+}
+
+.thead-petroleo {
+    background-color: #006666; /* Azul petróleo */
+    color: white;
+    text-align: center;
+}
+
+.table-custom th, .table-custom td {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    vertical-align: middle;
+}
+
+.table-custom tbody tr:hover {
+    background-color: #e0f7fa;
+}
+
+.table-custom th {
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* Personalização dos botões */
+.custom-btn {
+    width: 25px;
+    height: 25px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    margin: 0 5px;
+    border-radius: 50%;
+}
+
+/* Cores dos botões de ação */
+.btn-warning {
+    background-color: #ffcc00;
+    border: none;
+}
+
+.btn-danger {
+    background-color: #cc0000;
+    border: none;
+}
+
+.text-center {
+    text-align: center;
 }

@@ -6,16 +6,138 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.5.0/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <title>Cadastro de Usuário</title>
+    <title>Consultar e Editar Usuário</title>
 </head>
 <body>
-    <h2>Editar Usuário</h2>
-    <form method="POST" action="{{ url_for('edit_user', id=user.id) }}">
-      <input type="text" name="name" value="{{ user.name }}" placeholder="Nome">
-      <input type="email" name="email" value="{{ user.email }}" placeholder="Email">
-      <button type="submit">Salvar</button>
-    </form>
-    <a href="{{ url_for('register') }}">Cancelar</a>
+    <div class="containerconsultar">
+        <h2>Consultar Usuário</h2>
+        <br>
+<!-- Formulário de consulta -->
+<form id="search-form" class="form-row mb-4 justify-content-center">
+    <div class="col-auto">
+        <input type="text" name="query" class="form-control form-control-lg" placeholder="Digite nome, email ou perfil" value="">
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-lg btn-petroleo align-top">Consultar</button>
+    </div>
+</form>
+                <!-- Tabela de resultados -->
+        <div id="search-results"></div>
+    </div>
+
+    <!-- Modal para confirmação de exclusão -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirmar Exclusão</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Você tem certeza que deseja excluir este usuário?
+                </div>
+                <div class="modal-footer">
+                    <form method="POST" action="{{ url_for('delete_user') }}" id="deleteForm">
+                        <input type="hidden" name="user_id" id="userIdToDelete">
+                        <button type="submit" class="btn btn-danger">Confirmar</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     
+    <!-- Função AJAX para carregar resultados -->
+    <script>
+        $(document).ready(function() {
+            $('#search-form').submit(function(event) {
+                event.preventDefault(); // Evita o recarregamento da página
+                
+                var formData = $(this).serialize(); // Captura os dados do formulário
+                
+                $.ajax({
+                    url: "{{ url_for('search_user') }}", // Endereço da rota de busca
+                    type: "GET",
+                    data: formData,
+                    success: function(response) {
+                        $('#search-results').html(response); // Insere o conteúdo retornado no div
+                    },
+                    error: function() {
+                        $('#search-results').html('<p>Erro ao buscar os dados.</p>');
+                    }
+                });
+            });
+        });
+        function confirmDelete(userId) {
+    $('#userIdToDelete').val(userId);
+    $('#deleteModal').modal('show');
+}
+
+$('#deleteForm').submit(function(event) {
+    event.preventDefault(); // Evita o recarregamento da página
+    var userId = $('#userIdToDelete').val();
+
+    $.ajax({
+        url: "{{ url_for('delete_user') }}",
+        type: "POST",
+        data: {user_id: userId},
+        success: function(response) {
+            if (response.status === 'success') {
+                $('#deleteModal').modal('hide');
+                // Atualiza a tabela de usuários após a exclusão
+                $('#search-form').submit(); // Reenvia a busca para recarregar a tabela
+                alert('Usuário excluído com sucesso!');
+            }
+        },
+        error: function() {
+            alert('Erro ao excluir usuário.');
+        }
+    });
+});
+
+function loadEditUser(userId) {
+    $.ajax({
+        url: '/editar_user/' + userId,
+        type: 'GET',
+        success: function(response) {
+            $('#main-content').html(response);  // Substitui o conteúdo do container principal pela página de edição
+        },
+        error: function() {
+            alert('Erro ao carregar o formulário de edição.');
+        }
+    });
+}
+$('#editForm').submit(function(event) {
+    event.preventDefault(); // Evita o redirecionamento padrão
+
+    var formData = $(this).serialize(); // Pega os dados do formulário
+
+    $.ajax({
+        url: $(this).attr('action'),  // Usa a URL do atributo action do formulário
+        type: 'POST',
+        data: formData,
+        success: function(response) {
+            if (response.status === 'success') {
+                $('#search-form').submit(); // Reenvia a busca para recarregar a tabela
+                alert('Usuário atualizado com sucesso!');
+                // Oculta o formulário de edição ou redireciona conforme necessário
+                $('#editModal').modal('hide');
+            } else {
+                alert('Erro ao atualizar o usuário.');
+            }
+        },
+        error: function() {
+            alert('Erro ao atualizar o usuário.');
+        }
+    });
+});
+
+    </script>
 </body>
 </html>
