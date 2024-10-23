@@ -27,6 +27,7 @@
             <div class="form-group">
                 <label for="profile_id">Perfil</label>
                 <select class="form-control" id="profile_id" name="profile_id" required>
+                    <option value="" disabled selected>Selecione um Perfil</option>
                     {% for profile in profiles %}
                     <option value="{{ profile.id }}">{{ profile.name }}</option>
                     {% endfor %}

@@ -123,9 +123,21 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link load-page" data-page="{{ url_for('edit_user', id=1) }}">
+                                <i class="bi bi-pencil"></i>
+                                <span>Editar Usuário</span>
+                            </a>
+                        </li>                       
+                        <li class="nav-item">
                             <a class="nav-link load-page" data-page="{{ url_for('add_profile') }}">
                                 <i class="bi bi-person-badge"></i>
                                 <span>Perfil</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link load-page" data-page="{{ url_for('edit_profile', id=1) }}">
+                                <i class="bi bi-pencil-square"></i>
+                                <span>Editar Perfil</span>
                             </a>
                         </li>
                     </ul>

@@ -160,6 +160,27 @@ def add_profile():
         return redirect(url_for('home'))
     return render_template('add_profile.html')
 
+@app.route('/edit_user/<int:id>', methods=['GET', 'POST'])
+def edit_user(id):
+    user = User.query.get_or_404(id)
+    if request.method == 'POST':
+        user.name = request.form['name']
+        user.email = request.form['email']
+        db.session.commit()
+        return redirect(url_for('register'))
+    return render_template('edit_user.html', user=user)
+
+@app.route('/edit_profile/<int:id>', methods=['GET', 'POST'])
+def edit_profile(id):
+    profile = Profile.query.get_or_404(id)
+    if request.method == 'POST':
+        profile.name = request.form['profile_name']
+        db.session.commit()
+        return redirect(url_for('add_profile'))
+    return render_template('edit_profile.html', profile=profile)
+
+
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # Cria as tabelas se não existirem
