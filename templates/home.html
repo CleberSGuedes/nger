@@ -33,15 +33,33 @@
             text-overflow: ellipsis;
             transition: all 0.3s ease;
             cursor: pointer; /* Muda o cursor para mãozinha */
+            color: white;  /* Definir cor branca para os links */
         }
 
         .sidebar .nav-link i {
             margin-right: 10px;
             font-size: 1.25rem; /* Tamanho ajustado dos ícones */
+            color: white; /* Cor dos ícones */
+        }
+
+        /* Cor dos textos dos submenus também em branco */
+        .sidebar .nav-link span {
+            color: white; /* Mantém o texto branco nos submenus */
+        }
+
+        /* Cor do hover para links */
+        .sidebar .nav-link:hover {
+            background-color: #005f63; /* Cor ao passar o mouse */
+            color: #ffffff; /* Garante que o texto permaneça branco */
+        }
+
+        .sidebar .nav-link:hover i {
+            color: #ffffff; /* Garante que o ícone também permaneça branco */
         }
 
         .sidebar h4 {
             margin-top: 1rem;
+            color: white; /* Mantém o título em branco */
         }
 
         .sidebar.collapsed h4,
@@ -91,7 +109,7 @@
             <h4>NGER</h4>
             <ul class="nav flex-column">
                 <li class="nav-item">
-                    <a class="nav-link active" href="#">
+                    <a class="nav-link active load-page" data-page="{{ url_for('principal') }}" href="#">
                         <i class="bi bi-house-door"></i>
                         <span>Início</span>
                     </a>
@@ -135,7 +153,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link load-page" data-page="{{ url_for('edit_profile', id=1) }}">
+                            <a class="nav-link load-page" data-page="{{ url_for('consultar_perfil', id=1) }}">
                                 <i class="bi bi-pencil-square"></i>
                                 <span>Editar Perfil</span>
                             </a>
@@ -167,8 +185,6 @@
 
             <div class="container mt-4">
                 <!-- Conteúdo principal -->
-                <img src="{{ url_for('static', filename='imagens/unnamed.jpg') }}" alt="Em desenvolvimento" class="centered-image">
-                
                 <div id="main-content">
                     <!-- O conteúdo das páginas será carregado aqui -->
                 </div>
@@ -176,24 +192,30 @@
         </div>
     </div>
 
-    <!-- Incluindo apenas uma versão do jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-       $(document).on('click', '.load-page', function(event) {
-           event.preventDefault(); // Evita o comportamento padrão do link
-           var page = $(this).data('page');
-           
-           console.log("Clicou em:", $(this).text(), "| URL:", page); // Console log para saber qual submenu foi clicado
-           
-           // Carrega o conteúdo HTML na div main-content
-           $('#main-content').load(page, function(response, status, xhr) {
-               if (status === "error") {
-                   var msg = "Sorry but there was an error: ";
-                   $("#main-content").html(msg + xhr.status + " " + xhr.statusText);
-               }
-           });
+<!-- Incluindo apenas uma versão do jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+   // Carregar a página principal no main-content ao carregar a página home
+   $(document).ready(function() {
+       $('#main-content').load("{{ url_for('principal') }}");
+   });
+
+   // Função para carregar outras páginas dinamicamente
+   $(document).on('click', '.load-page', function(event) {
+       event.preventDefault(); // Evita o comportamento padrão do link
+       var page = $(this).data('page');
+       
+       console.log("Clicou em:", $(this).text(), "| URL:", page); // Console log para saber qual submenu foi clicado
+       
+       // Carrega o conteúdo HTML na div main-content
+       $('#main-content').load(page, function(response, status, xhr) {
+           if (status === "error") {
+               var msg = "Sorry but there was an error: ";
+               $("#main-content").html(msg + xhr.status + " " + xhr.statusText);
+           }
        });
-    </script>
+   });
+</script>
     
     <script>
         // Função para exibir a data no formato desejado

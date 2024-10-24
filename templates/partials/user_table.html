@@ -16,10 +16,10 @@
             <td>{{ user.email }}</td>
             <td>{{ user.profile.name if user.profile else 'Sem Perfil' }}</td>
             <td class="text-center" style="white-space: nowrap;">
-                <button type="button" class="btn btn-sm btn-warning custom-btn mx-1" onclick="loadEditUser('{{ user.id }}')">
+                <button type="button" class="btn btn-sm btn-warning custom-btn mx-1" onclick="loadEditUser('{{ user.id }}')" title="Editar">
                     <i class="bi bi-pencil"></i>
                 </button>
-                <button type="button" class="btn btn-sm btn-danger custom-btn mx-1" onclick="confirmDelete('{{ user.id }}')">
+                <button type="button" class="btn btn-sm btn-danger custom-btn mx-1" onclick="confirmDelete('{{ user.id }}')" title="Excluir">
                     <i class="bi bi-x-circle"></i>
                 </button>
             </td>

@@ -34,13 +34,34 @@ body {
 
 /* Estilo para Containers do login */
 .containerlogin {
-    width: 300px;
+    width: 313px;
     margin: auto;
     background: white;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     padding: 20px;
-    margin-top: 50px;
+    margin-top: 10px;
+}
+
+/* Estilo para Containers do login2 */
+.containerlogin2 {
+    width: 313px;
+    margin: auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-top: 200px;
+}
+/* Estilo para Container principal */
+.containerprincipal {
+    width: 600px;
+    margin: auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-top: 0px;
 }
 
 /* Estilo para Containers do login */
@@ -51,7 +72,7 @@ body {
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     padding: 20px;
-    margin-top: 50px;
+    margin-top: 10px;
 }
 
 /* Estilo de Formulário */
@@ -89,6 +110,15 @@ button {
     cursor: pointer;
 }
 
+.btn-senha {
+    width: 100%;
+    padding: 10px;
+    background-color: #005f5f; /* Azul petróleo escuro */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
 button:hover {
     background-color: #003e3e; /* Azul petróleo mais escuro ao passar o mouse */
 }

@@ -6,16 +6,16 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.5.0/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <title>Consultar e Editar Usuário</title>
+    <title>Consultar e Editar Perfis</title>
 </head>
 <body>
     <div class="containerconsultar">
-        <h2>Consultar Usuário</h2>
+        <h2>Consultar Perfis</h2>
         <br>
         <!-- Formulário de consulta -->
         <form id="search-form" class="form-row mb-4 justify-content-center" autocomplete="off">
             <div class="col-auto">
-                <input type="text" name="query" class="form-control form-control-lg" placeholder="Digite nome, email ou perfil" value="">
+                <input type="text" name="query" class="form-control form-control-lg" placeholder="Digite o nome do perfil" value="">
             </div>
             <div class="col-auto">
                 <button type="submit" class="btn btn-lg btn-petroleo align-top">Consultar</button>
@@ -36,11 +36,11 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    Você tem certeza que deseja excluir este usuário?
+                    Você tem certeza que deseja excluir este perfil?
                 </div>
                 <div class="modal-footer">
-                    <form method="POST" action="{{ url_for('delete_user') }}" id="deleteForm">
-                        <input type="hidden" name="user_id" id="userIdToDelete">
+                    <form method="POST" action="{{ url_for('delete_profile') }}" id="deleteForm">
+                        <input type="hidden" name="profile_id" id="profileIdToDelete">
                         <button type="submit" class="btn btn-danger">Confirmar</button>
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                     </form>
@@ -62,48 +62,48 @@
                 var formData = $(this).serialize(); // Captura os dados do formulário
 
                 $.ajax({
-                    url: "{{ url_for('search_user') }}", // Endereço da rota de busca
+                    url: "{{ url_for('search_profile') }}", // Endereço da rota de busca
                     type: "GET",
                     data: formData,
                     success: function(response) {
                         $('#search-results').html(response); // Insere o conteúdo retornado no div
                     },
                     error: function() {
-                        $('#search-results').html('<p>Erro ao buscar os dados.</p>');
+                        $('#search-results').html('<p>Erro ao buscar os perfis.</p>');
                     }
                 });
             });
         });
 
-        function confirmDelete(userId) {
-            $('#userIdToDelete').val(userId);
+        function confirmDelete(profileId) {
+            $('#profileIdToDelete').val(profileId);
             $('#deleteModal').modal('show');
         }
 
         $('#deleteForm').submit(function(event) {
             event.preventDefault(); // Evita o recarregamento da página
-            var userId = $('#userIdToDelete').val();
+            var profileId = $('#profileIdToDelete').val();
 
             $.ajax({
-                url: "{{ url_for('delete_user') }}",
+                url: "{{ url_for('delete_profile') }}",
                 type: "POST",
-                data: {user_id: userId},
+                data: {profile_id: profileId},
                 success: function(response) {
                     if (response.status === 'success') {
                         $('#deleteModal').modal('hide');
                         $('#search-form').submit(); // Reenvia a busca para recarregar a tabela
-                        alert('Usuário excluído com sucesso!');
+                        alert('Perfil excluído com sucesso!');
                     }
                 },
                 error: function() {
-                    alert('Erro ao excluir usuário.');
+                    alert('Erro ao excluir perfil.');
                 }
             });
         });
 
-        function loadEditUser(userId) {
+        function loadEditProfile(profileId) {
             $.ajax({
-                url: '/editar_user/' + userId,
+                url: '/edit_profile/' + profileId,
                 type: 'GET',
                 success: function(response) {
                     $('#main-content').html(response);  // Substitui o conteúdo do container principal pela página de edição
@@ -113,29 +113,6 @@
                 }
             });
         }
-
-        $('#editForm').submit(function(event) {
-            event.preventDefault(); // Evita o redirecionamento padrão
-
-            var formData = $(this).serialize(); // Pega os dados do formulário
-
-            $.ajax({
-                url: $(this).attr('action'),  // Usa a URL do atributo action do formulário
-                type: 'POST',
-                data: formData,
-                success: function(response) {
-                    if (response.status === 'success') {
-                        $('#search-form').submit(); // Reenvia a busca para recarregar a tabela
-                        alert('Usuário atualizado com sucesso!');
-                    } else {
-                        alert('Erro ao atualizar o usuário.');
-                    }
-                },
-                error: function() {
-                    alert('Erro ao atualizar o usuário.');
-                }
-            });
-        });
     </script>
 </body>
 </html>

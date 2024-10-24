@@ -16,7 +16,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:guedes90@127.0.0.1
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USERNAME'] = 'cleber.guedes@edu.mt.gov.br'
-app.config['MAIL_PASSWORD'] = 'wgno zsyk maku vnjp'
+app.config['MAIL_PASSWORD'] = 'gnbs njed mvkm jwla'
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
 
@@ -59,7 +59,8 @@ def load_user(user_id):
 @app.route('/')
 @login_required
 def home():
-    return render_template('home.html', user=current_user)
+    return render_template('home.html', user=current_user, load_principal=True)
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -210,21 +211,69 @@ def search_user():
 @app.route('/delete_user', methods=['POST'])
 def delete_user():
     user_id = request.form['user_id']
+    
+    # Excluir tokens de redefinição de senha relacionados ao usuário
+    PasswordResetToken.query.filter_by(user_id=user_id).delete()
+    
+    # Excluir o usuário
     user = User.query.get_or_404(user_id)
     db.session.delete(user)
     db.session.commit()
+    
     return {'status': 'success'}, 200
 
 
+# Rota para consultar perfis
+@app.route('/search_profile', methods=['GET'])
+def search_profile():
+    query = request.args.get('query', '').strip()
+
+    # Se houver um termo de busca, faz o filtro
+    if query:
+        profiles = Profile.query.filter(Profile.name.ilike(f'%{query}%')).all()
+    else:
+        profiles = Profile.query.all()  # Carrega todos os perfis se não houver busca
+
+    return render_template('partials/profile_table.html', profiles=profiles)
+
+# Rota para editar perfil
 @app.route('/edit_profile/<int:id>', methods=['GET', 'POST'])
 def edit_profile(id):
     profile = Profile.query.get_or_404(id)
     if request.method == 'POST':
         profile.name = request.form['profile_name']
         db.session.commit()
-        return redirect(url_for('add_profile'))
-    return render_template('edit_profile.html', profile=profile)
+        flash('Perfil atualizado com sucesso!')
+        return jsonify(status='success')  # Retorna um JSON de sucesso
 
+    return render_template('partials/edit_profile.html', profile=profile)
+
+# Rota para excluir perfil
+@app.route('/delete_profile', methods=['POST'])
+def delete_profile():
+    profile_id = request.form['profile_id']
+    profile = Profile.query.get_or_404(profile_id)
+    db.session.delete(profile)
+    db.session.commit()
+    return {'status': 'success'}, 200
+
+# Rota para consultar perfis
+@app.route('/consultar_perfil', methods=['GET'])
+def consultar_perfil():
+    query = request.args.get('query', '').strip()
+
+    # Se houver um termo de busca, faz o filtro
+    if query:
+        profiles = Profile.query.filter(Profile.name.ilike(f'%{query}%')).all()
+    else:
+        profiles = Profile.query.all()  # Carrega todos os perfis se não houver busca
+
+    return render_template('partials/consultar_perfil.html', profiles=profiles)
+
+# Rota para página principal
+@app.route('/principal')
+def principal():
+    return render_template('principal.html')
 
 
 if __name__ == '__main__':
