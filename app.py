@@ -68,7 +68,7 @@ def login():
         password = request.form['password']
         
         user = User.query.filter_by(email=email).first()
-        # Correção: ajuste no método de hash para pbkdf2:sha256, que é amplamente suportado
+        # Correção: garantindo compatibilidade usando pbkdf2:sha256 para verificação de senha
         if user and check_password_hash(user.password, password):
             login_user(user)
             return redirect(url_for('home'))
@@ -99,7 +99,7 @@ def forgot_password():
             db.session.commit()
 
             msg = Message('Recuperação de Senha', sender=app.config['MAIL_USERNAME'], recipients=[email])
-            msg.body = f'Acesse o link para redefinir sua senha: http://127.0.0.1:5000/reset-password/{token}'
+            msg.body = f'Acesse o link para redefinir sua senha: https://nger.onrender.com/reset-password/{token}'
             mail.send(msg)
             flash('E-mail de recuperação enviado!', 'success')
             return redirect(url_for('login'))
@@ -121,7 +121,7 @@ def reset_password(token):
         user = User.query.get(reset_token.user_id)
 
         if user:
-            # Correção: usando 'pbkdf2:sha256' para gerar a hash da senha
+            # Correção: utilizando 'pbkdf2:sha256' para criar o hash da nova senha
             user.password = generate_password_hash(new_password, method='pbkdf2:sha256')
             db.session.commit()
             db.session.delete(reset_token)
@@ -137,7 +137,7 @@ def register():
     if request.method == 'POST':
         nome = request.form['nome']
         email = request.form['email']
-        # Correção: utilizando o método pbkdf2:sha256 para compatibilidade ampla
+        # Correção: utilizando pbkdf2:sha256 para gerar a hash da senha no cadastro
         password = generate_password_hash(request.form['password'], method='pbkdf2:sha256')
         profile_id = request.form['profile_id']
 
@@ -153,6 +153,7 @@ def register():
         print(f'ID: {profile.id}, Nome: {profile.name}')
 
     return render_template('register.html', profiles=profiles)
+
 
 @app.route('/add_profile', methods=['GET', 'POST'])
 def add_profile():
