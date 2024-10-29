@@ -61,7 +61,6 @@ def load_user(user_id):
 def home():
     return render_template('home.html', user=current_user, load_principal=True)
 
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -69,6 +68,7 @@ def login():
         password = request.form['password']
         
         user = User.query.filter_by(email=email).first()
+        # Correção: ajuste no método de hash para pbkdf2:sha256, que é amplamente suportado
         if user and check_password_hash(user.password, password):
             login_user(user)
             return redirect(url_for('home'))
@@ -121,7 +121,8 @@ def reset_password(token):
         user = User.query.get(reset_token.user_id)
 
         if user:
-            user.password = generate_password_hash(new_password, method='pbkdf2:sha256')  # Usar pbkdf2:sha256
+            # Correção: usando 'pbkdf2:sha256' para gerar a hash da senha
+            user.password = generate_password_hash(new_password, method='pbkdf2:sha256')
             db.session.commit()
             db.session.delete(reset_token)
             db.session.commit()
@@ -136,7 +137,8 @@ def register():
     if request.method == 'POST':
         nome = request.form['nome']
         email = request.form['email']
-        password = generate_password_hash(request.form['password'], method='pbkdf2:sha256')  # Usar pbkdf2:sha256
+        # Correção: utilizando o método pbkdf2:sha256 para compatibilidade ampla
+        password = generate_password_hash(request.form['password'], method='pbkdf2:sha256')
         profile_id = request.form['profile_id']
 
         new_user = User(nome=nome, email=email, password=password, profile_id=profile_id)
