@@ -43,16 +43,75 @@ body {
     margin-top: 10px;
 }
 
-/* Estilo para Containers do login2 */
+/* Estilo para Containers do login2 com fundo branco sólido */
 .containerlogin2 {
-    width: 313px;
+    position: relative;
+    width: 300px;
     margin: auto;
-    background: white;
+    background-color: white; /* Fundo branco sólido */
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     padding: 20px;
     margin-top: 200px;
+    z-index: 1;
 }
+
+/* Largura fixa para ambos os campos de entrada */
+form input[type="email"],
+form input[type="password"] {
+    width: 100%; /* Define a largura completa para ambos os campos dentro do form */
+    max-width: 302px; /* Limita a largura máxima dos campos */
+    box-sizing: border-box; /* Garante que o padding não altere o tamanho do input */
+}
+
+/* Espaço extra apenas no campo de senha para o ícone */
+.password-container input[type="password"] {
+    padding-right: 35px;
+}
+
+/* Estilo para o container do campo de senha com ícone */
+.password-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%; /* Mantém a largura do container */
+}
+
+/* Estilo do ícone de mostrar/esconder senha */
+.toggle-password {
+    position: absolute;
+    right: 20px; /* Margem direita consistente */
+    top: 32%; /* Ajuste fino para centralizar verticalmente */
+    transform: translateY(-40%); /* Centraliza no campo */
+    cursor: pointer;
+    font-size: 18px;
+    color: rgba(0, 0, 0, 0.2); /* Cinza com 20% de opacidade */
+}
+
+/* Faixa de fundo para título e logo */
+.title-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f0f4f8; /* Cor de fundo suave */
+    padding: 10px;
+    border-radius: 8px; /* Borda arredondada para suavidade */
+    margin-bottom: 20px; /* Espaço abaixo da faixa */
+}
+
+/* Estilo do título */
+.title-bar h2 {
+    font-size: 18px;
+    margin: 0;
+    color: #333; /* Cor do texto */
+}
+
+/* Estilo da logo */
+.title-bar .logo {
+    height: 40px; /* Tamanho da imagem ajustado */
+    margin-left: 10px; /* Espaço entre o título e a imagem */
+}
+
 /* Estilo para Container principal */
 .containerprincipal {
     width: 600px;
@@ -111,7 +170,7 @@ button {
 }
 
 .btn-senha {
-    width: 100%;
+    width: 302px;
     padding: 10px;
     background-color: #005f5f; /* Azul petróleo escuro */
     color: white;

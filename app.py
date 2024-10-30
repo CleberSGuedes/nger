@@ -1,15 +1,14 @@
-from flask import Flask, render_template, redirect, url_for, request, flash, jsonify  # Adicione 'jsonify'
+from flask import Flask, render_template, redirect, url_for, request, flash, session, jsonify
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_mail import Mail, Message
-from sqlalchemy.orm import joinedload
+from datetime import datetime, timedelta
 import os
 import secrets
-from datetime import datetime, timedelta
 
 app = Flask(__name__)
-app.secret_key = 'guedes90'  # Mantenha isso em segredo!
+app.secret_key = 'guedes90'
 
 # Configurações do banco de dados
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:OXRlbi29015@177.87.122.164:3306/sistemanger'
@@ -24,10 +23,11 @@ app.config['MAIL_USE_SSL'] = True
 db = SQLAlchemy(app)
 mail = Mail(app)
 
-# Configurando o Flask-Login
+# Configuração do Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+login_manager.login_message = None
 
 # Modelos
 class User(UserMixin, db.Model):
@@ -37,8 +37,11 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
     profile_id = db.Column(db.Integer, db.ForeignKey('profiles.id'))
-    
-    profile = db.relationship('Profile', backref='users', lazy=True)  # Relacionamento com Profile
+    ip_address = db.Column(db.String(45), nullable=True)
+    last_activity = db.Column(db.DateTime, nullable=True)
+    is_active = db.Column(db.Boolean, default=False)
+
+    profile = db.relationship('Profile', backref='users', lazy=True)
 
 class Profile(db.Model):
     __tablename__ = 'profiles'
@@ -59,7 +62,27 @@ def load_user(user_id):
 @app.route('/')
 @login_required
 def home():
-    return render_template('home.html', user=current_user, load_principal=True)
+    return render_template('home.html', user=current_user)
+
+@app.before_request
+def check_activity():
+    if current_user.is_authenticated:
+        last_activity = session.get('last_activity')
+        current_time = datetime.utcnow()
+
+        # Garante que last_activity seja comparável ao current_time (sem fuso horário)
+        if last_activity and last_activity.tzinfo is not None:
+            last_activity = last_activity.replace(tzinfo=None)
+
+        # Verifica inatividade
+        if last_activity and current_time - last_activity > timedelta(minutes=30):
+            logout_user()
+            session.clear()
+            flash('Sua sessão foi encerrada por inatividade.', 'info')
+            return redirect(url_for('login'))
+
+        # Atualiza última atividade
+        session['last_activity'] = current_time
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -68,9 +91,10 @@ def login():
         password = request.form['password']
         
         user = User.query.filter_by(email=email).first()
-        # Correção: garantindo compatibilidade usando pbkdf2:sha256 para verificação de senha
+        
         if user and check_password_hash(user.password, password):
             login_user(user)
+            session['last_activity'] = datetime.utcnow()  # Define a última atividade ao logar
             return redirect(url_for('home'))
         else:
             flash('E-mail ou senha incorretos.', 'error')
@@ -81,6 +105,7 @@ def login():
 @login_required
 def logout():
     logout_user()
+    session.clear()
     flash('Você foi desconectado.', 'success')
     return redirect(url_for('login'))
 

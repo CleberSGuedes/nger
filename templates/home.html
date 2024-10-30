@@ -17,14 +17,13 @@
             height: 100vh;
             position: fixed;
             transition: width 0.3s ease;
-            overflow: hidden; /* Evita que o conteúdo fique visível quando colapsado */
+            overflow: hidden;
         }
 
         .sidebar.collapsed {
             width: 60px;
         }
 
-        /* Itens da barra de menu */
         .sidebar .nav-link {
             display: flex;
             align-items: center;
@@ -32,47 +31,41 @@
             overflow: hidden;
             text-overflow: ellipsis;
             transition: all 0.3s ease;
-            cursor: pointer; /* Muda o cursor para mãozinha */
-            color: white;  /* Definir cor branca para os links */
+            cursor: pointer;
+            color: white;
         }
 
         .sidebar .nav-link i {
             margin-right: 10px;
-            font-size: 1.25rem; /* Tamanho ajustado dos ícones */
-            color: white; /* Cor dos ícones */
+            font-size: 1.25rem;
+            color: white;
         }
 
-        /* Cor dos textos dos submenus também em branco */
         .sidebar .nav-link span {
-            color: white; /* Mantém o texto branco nos submenus */
+            color: white;
         }
 
-        /* Cor do hover para links */
         .sidebar .nav-link:hover {
-            background-color: #005f63; /* Cor ao passar o mouse */
-            color: #ffffff; /* Garante que o texto permaneça branco */
-        }
-
-        .sidebar .nav-link:hover i {
-            color: #ffffff; /* Garante que o ícone também permaneça branco */
+            background-color: #005f63;
+            color: #ffffff;
         }
 
         .sidebar h4 {
             margin-top: 1rem;
-            color: white; /* Mantém o título em branco */
+            color: white;
         }
 
         .sidebar.collapsed h4,
         .sidebar.collapsed .nav-link span {
-            display: none; /* Esconde o texto e o título do menu quando colapsado */
+            display: none;
         }
 
         .sidebar.collapsed .nav-link {
-            justify-content: center; /* Centraliza os ícones quando o menu está colapsado */
+            justify-content: center;
         }
 
         .sidebar.collapsed .collapse {
-            display: none; /* Esconde os submenus quando a barra está recolhida */
+            display: none;
         }
 
         /* Botão de alternar sidebar */
@@ -84,7 +77,7 @@
             cursor: pointer;
             padding: 0;
             margin-bottom: 1rem;
-            width: auto; /* Ajustar largura para ser apenas o tamanho do ícone */
+            width: auto;
         }
     </style>
 
@@ -202,36 +195,45 @@
 
    // Função para carregar outras páginas dinamicamente
    $(document).on('click', '.load-page', function(event) {
-       event.preventDefault(); // Evita o comportamento padrão do link
+       event.preventDefault();
        var page = $(this).data('page');
-       
-       console.log("Clicou em:", $(this).text(), "| URL:", page); // Console log para saber qual submenu foi clicado
-       
-       // Carrega o conteúdo HTML na div main-content
        $('#main-content').load(page, function(response, status, xhr) {
            if (status === "error") {
-               var msg = "Sorry but there was an error: ";
+               var msg = "Desculpe, ocorreu um erro: ";
                $("#main-content").html(msg + xhr.status + " " + xhr.statusText);
            }
        });
    });
 </script>
+
+<script>
+    // Função para exibir a data no formato desejado
+    function displayDate() {
+        const dateElement = document.getElementById('date');
+        const today = new Date();
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        const formattedDate = today.toLocaleDateString('pt-BR', options);
+        dateElement.textContent = formattedDate;
+    }
+    window.onload = displayDate;
+
+    // Verificar status da sessão e atualizar a página caso inativa
+    function checkSessionStatus() {
+        fetch(window.location.href)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'inactive') {
+                    location.reload();
+                }
+            })
+            .catch(error => console.log("Erro ao verificar status da sessão:", error));
+    }
+
+    // Verifica o status da sessão a cada 5 segundos
+    setInterval(checkSessionStatus, 50000);
+</script>
     
-    <script>
-        // Função para exibir a data no formato desejado
-        function displayDate() {
-            const dateElement = document.getElementById('date');
-            const today = new Date();
-            const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            const formattedDate = today.toLocaleDateString('pt-BR', options);
-            dateElement.textContent = formattedDate; // Inserir data formatada no span
-        }
-    
-        // Executar a função assim que a página carregar
-        window.onload = displayDate;
-    </script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
