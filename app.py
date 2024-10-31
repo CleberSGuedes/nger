@@ -4,8 +4,10 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_mail import Mail, Message
 from datetime import datetime, timedelta
+from sqlalchemy.orm import joinedload
 import os
 import secrets
+from uuid import uuid4  # Para IDs de sessão únicos
 
 app = Flask(__name__)
 app.secret_key = 'guedes90'
@@ -40,6 +42,7 @@ class User(UserMixin, db.Model):
     ip_address = db.Column(db.String(45), nullable=True)
     last_activity = db.Column(db.DateTime, nullable=True)
     is_active = db.Column(db.Boolean, default=False)
+    session_id = db.Column(db.String(36), nullable=True)  # Coluna para armazenar o ID de sessão
 
     profile = db.relationship('Profile', backref='users', lazy=True)
 
@@ -70,18 +73,15 @@ def check_activity():
         last_activity = session.get('last_activity')
         current_time = datetime.utcnow()
 
-        # Garante que last_activity seja comparável ao current_time (sem fuso horário)
         if last_activity and last_activity.tzinfo is not None:
             last_activity = last_activity.replace(tzinfo=None)
 
-        # Verifica inatividade
         if last_activity and current_time - last_activity > timedelta(minutes=30):
             logout_user()
             session.clear()
             flash('Sua sessão foi encerrada por inatividade.', 'info')
             return redirect(url_for('login'))
 
-        # Atualiza última atividade
         session['last_activity'] = current_time
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -93,17 +93,48 @@ def login():
         user = User.query.filter_by(email=email).first()
         
         if user and check_password_hash(user.password, password):
+            if user.session_id:
+                return render_template('confirm_logout.html', user=user)
+            
+            new_session_id = str(uuid4())
+            user.session_id = new_session_id
+            db.session.commit()
+
             login_user(user)
-            session['last_activity'] = datetime.utcnow()  # Define a última atividade ao logar
+            session['last_activity'] = datetime.utcnow()
+            session['session_id'] = new_session_id
+
             return redirect(url_for('home'))
         else:
             flash('E-mail ou senha incorretos.', 'error')
 
     return render_template('login.html')
 
+@app.route('/confirm_login', methods=['POST'])
+def confirm_login():
+    user_id = request.form.get('user_id')
+    user = User.query.get(user_id)
+
+    if user:
+        new_session_id = str(uuid4())
+        user.session_id = new_session_id
+        db.session.commit()
+
+        login_user(user)
+        session['last_activity'] = datetime.utcnow()
+        session['session_id'] = new_session_id
+
+        flash('Sessão anterior desconectada. Bem-vindo(a) novamente!', 'info')
+        return redirect(url_for('home'))
+
+    flash('Erro ao confirmar login.', 'error')
+    return redirect(url_for('login'))
+
 @app.route('/logout')
 @login_required
 def logout():
+    current_user.session_id = None
+    db.session.commit()
     logout_user()
     session.clear()
     flash('Você foi desconectado.', 'success')
@@ -306,5 +337,5 @@ def principal():
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()  # Cria as tabelas se não existirem
+        db.create_all()
     app.run(debug=True)

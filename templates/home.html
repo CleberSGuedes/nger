@@ -24,6 +24,7 @@
             width: 60px;
         }
 
+        /* Itens da barra de menu */
         .sidebar .nav-link {
             display: flex;
             align-items: center;
@@ -47,6 +48,10 @@
 
         .sidebar .nav-link:hover {
             background-color: #005f63;
+            color: #ffffff;
+        }
+
+        .sidebar .nav-link:hover i {
             color: #ffffff;
         }
 
@@ -102,11 +107,11 @@
             <h4>NGER</h4>
             <ul class="nav flex-column">
                 <li class="nav-item">
-                    <a class="nav-link active load-page" data-page="{{ url_for('principal') }}" href="#">
+                    <a class="nav-link active load-page" data-page="{{ url_for('principal') }}" href="{{ url_for('principal') }}">
                         <i class="bi bi-house-door"></i>
                         <span>Início</span>
                     </a>
-                </li>
+                                    </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#submenu2" data-toggle="collapse" aria-expanded="false" aria-controls="submenu2">
                         <i class="bi bi-briefcase"></i>
@@ -172,8 +177,7 @@
                 </div>
             </nav>
 
-            <header class="text-white text-center py-4" style="background-color: #007b7f;">
-                <h1>Bem-vindo ao Sistema NGER-SEDUC/MT</h1>
+            <header class="banner-header">
             </header>
 
             <div class="container mt-4">
@@ -185,55 +189,84 @@
         </div>
     </div>
 
-<!-- Incluindo apenas uma versão do jQuery -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-   // Carregar a página principal no main-content ao carregar a página home
-   $(document).ready(function() {
-       $('#main-content').load("{{ url_for('principal') }}");
-   });
-
-   // Função para carregar outras páginas dinamicamente
-   $(document).on('click', '.load-page', function(event) {
-       event.preventDefault();
-       var page = $(this).data('page');
-       $('#main-content').load(page, function(response, status, xhr) {
-           if (status === "error") {
-               var msg = "Desculpe, ocorreu um erro: ";
-               $("#main-content").html(msg + xhr.status + " " + xhr.statusText);
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+       // Definindo a URL para "Início" como uma variável JavaScript
+       const principalUrl = "{{ url_for('principal') }}";
+    
+       // Carregar a página principal no main-content ao carregar a página home
+       $(document).ready(function() {
+           $('#main-content').load(principalUrl);
+    
+           // Restaura o estado do menu ao carregar a página
+           var activeSubmenu = localStorage.getItem('activeSubmenu');
+           if (activeSubmenu) {
+               $(activeSubmenu).collapse('show'); // Expande o submenu salvo no localStorage
            }
        });
-   });
-</script>
-
-<script>
-    // Função para exibir a data no formato desejado
-    function displayDate() {
-        const dateElement = document.getElementById('date');
-        const today = new Date();
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        const formattedDate = today.toLocaleDateString('pt-BR', options);
-        dateElement.textContent = formattedDate;
-    }
-    window.onload = displayDate;
-
-    // Verificar status da sessão e atualizar a página caso inativa
-    function checkSessionStatus() {
-        fetch(window.location.href)
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'inactive') {
-                    location.reload();
-                }
-            })
-            .catch(error => console.log("Erro ao verificar status da sessão:", error));
-    }
-
-    // Verifica o status da sessão a cada 5 segundos
-    setInterval(checkSessionStatus, 50000);
-</script>
     
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+       // Função para carregar outras páginas dinamicamente
+       $(document).on('click', '.load-page', function(event) {
+           event.preventDefault();
+           var page = $(this).data('page');
+    
+           $('#main-content').load(page, function(response, status, xhr) {
+               if (status === "error") {
+                   var msg = "Sorry but there was an error: ";
+                   $("#main-content").html(msg + xhr.status + " " + xhr.statusText);
+               }
+           });
+       });
+    
+       // Função para recolher todos os submenus ao clicar no menu "Início"
+       $(document).on('click', `.nav-link[data-page="${principalUrl}"]`, function() {
+           // Recolhe todos os submenus
+           $('.collapse').collapse('hide');
+           // Remove o submenu ativo do localStorage
+           localStorage.removeItem('activeSubmenu');
+       });
+    
+       // Script para alternar submenus: expande o submenu clicado e recolhe os outros
+       $(document).on('click', '[data-toggle="collapse"]', function () {
+           var current = $(this).attr('href'); // Pega o submenu atual
+    
+           // Recolhe todos os submenus antes de qualquer ação
+           $('.collapse').each(function () {
+               var submenu = $(this).attr('id');
+               if ('#' + submenu !== current) {
+                   $(this).collapse('hide');
+               }
+           });
+    
+           // Verifica se o submenu atual está expandido ou recolhido
+           if ($(current).hasClass('show')) {
+               // Se o submenu está aberto, recolhe-o e remove do localStorage
+               $(current).collapse('hide');
+               localStorage.removeItem('activeSubmenu');
+           } else {
+               // Se o submenu está fechado, expande o submenu atual e salva no localStorage
+               $(current).collapse('show');
+               localStorage.setItem('activeSubmenu', current);
+           }
+       });
+    </script>
+    
+    <script>
+        // Função para exibir a data no formato desejado
+        function displayDate() {
+            const dateElement = document.getElementById('date');
+            const today = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            const formattedDate = today.toLocaleDateString('pt-BR', options);
+            dateElement.textContent = formattedDate;
+        }
+    
+        // Executar a função assim que a página carregar
+        window.onload = displayDate;
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+                            
 </body>
 </html>
