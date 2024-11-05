@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, request, flash, session, jsonify
+from flask import Flask, render_template, redirect, url_for, request, flash, session as flask_session, jsonify
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -60,7 +60,7 @@ class PasswordResetToken(db.Model):
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(user_id)
+    return db.session.get(User, int(user_id))
 
 @app.route('/')
 @login_required
@@ -69,20 +69,34 @@ def home():
 
 @app.before_request
 def check_activity():
+    if request.endpoint in ('static', 'login', 'confirm_login'):
+        return None
+
     if current_user.is_authenticated:
-        last_activity = session.get('last_activity')
-        current_time = datetime.utcnow()
-
-        if last_activity and last_activity.tzinfo is not None:
-            last_activity = last_activity.replace(tzinfo=None)
-
-        if last_activity and current_time - last_activity > timedelta(minutes=30):
+        user_from_db = User.query.get(current_user.id)
+        if user_from_db and user_from_db.session_id != flask_session.get('session_id'):
             logout_user()
-            session.clear()
-            flash('Sua sessão foi encerrada por inatividade.', 'info')
+            flask_session.clear()
+            flash('Sua sessão foi encerrada porque você fez login em outro dispositivo.', 'info')
             return redirect(url_for('login'))
 
-        session['last_activity'] = current_time
+        last_activity = flask_session.get('last_activity')
+        current_time = datetime.utcnow()
+
+        if last_activity:
+            # Converter para offset-naive para evitar problemas de comparação
+            last_activity = last_activity.replace(tzinfo=None) if last_activity.tzinfo else last_activity
+
+            if current_time - last_activity > timedelta(minutes=30):
+                user_from_db.is_active = False
+                user_from_db.session_id = None
+                db.session.commit()
+                logout_user()
+                flask_session.clear()
+                flash('Sua sessão foi encerrada por inatividade.', 'info')
+                return redirect(url_for('login'))
+
+        flask_session['last_activity'] = current_time
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -95,14 +109,17 @@ def login():
         if user and check_password_hash(user.password, password):
             if user.session_id:
                 return render_template('confirm_logout.html', user=user)
-            
+
             new_session_id = str(uuid4())
             user.session_id = new_session_id
+            user.is_active = True
+            user.ip_address = request.remote_addr
+            user.last_activity = datetime.utcnow()
             db.session.commit()
 
             login_user(user)
-            session['last_activity'] = datetime.utcnow()
-            session['session_id'] = new_session_id
+            flask_session['last_activity'] = datetime.utcnow()
+            flask_session['session_id'] = new_session_id
 
             return redirect(url_for('home'))
         else:
@@ -114,29 +131,28 @@ def login():
 def confirm_login():
     user_id = request.form.get('user_id')
     user = User.query.get(user_id)
-
     if user:
-        new_session_id = str(uuid4())
-        user.session_id = new_session_id
+        user.session_id = None
+        user.is_active = False
         db.session.commit()
 
-        login_user(user)
-        session['last_activity'] = datetime.utcnow()
-        session['session_id'] = new_session_id
+        flash('Sessão anterior desconectada. Por favor, faça login novamente para acessar o sistema.', 'info')
+        return redirect(url_for('login'))
 
-        flash('Sessão anterior desconectada. Bem-vindo(a) novamente!', 'info')
-        return redirect(url_for('home'))
-
-    flash('Erro ao confirmar login.', 'error')
+    flash('Erro ao confirmar logout. Tente novamente.', 'error')
     return redirect(url_for('login'))
 
 @app.route('/logout')
 @login_required
 def logout():
-    current_user.session_id = None
-    db.session.commit()
+    user_from_db = User.query.get(current_user.id)
+    if user_from_db:
+        user_from_db.is_active = False
+        user_from_db.session_id = None
+        db.session.commit()
+        
     logout_user()
-    session.clear()
+    flask_session.clear()
     flash('Você foi desconectado.', 'success')
     return redirect(url_for('login'))
 

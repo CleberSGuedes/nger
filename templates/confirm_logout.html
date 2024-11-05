@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Confirmação de Logout</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <div class="containerlogin2">
@@ -13,7 +12,6 @@
             <img src="{{ url_for('static', filename='imagens/bannerlogout.jpg') }}" alt="Logo" class="logo">
         </div>
 
-        <!-- Exibir mensagens flash -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <ul class="flashes">
@@ -24,8 +22,8 @@
             {% endif %}
         {% endwith %}
 
-        <p>Você já está logado em outro dispositivo ou com outro usuário!.</p>
-        <p>Deseja desconectar a sessão anterior e continuar com este login?</p>
+        <p>Você já está logado em outro dispositivo.</p>
+        <p>Deseja desconectar a sessão anterior?</p>
 
         <form action="{{ url_for('confirm_login') }}" method="post">
             <input type="hidden" name="user_id" value="{{ user.id }}">

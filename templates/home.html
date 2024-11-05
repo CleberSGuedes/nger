@@ -98,6 +98,8 @@
 </head>
 
 <body>
+       <!-- Inclua o pop-up de sucesso no layout base -->
+       {% include 'popup_success.html' %}
     <div class="d-flex">
         <!-- Menu Lateral -->
         <div class="sidebar p-3" id="sidebar">
@@ -198,11 +200,10 @@
        $(document).ready(function() {
            $('#main-content').load(principalUrl);
     
-           // Restaura o estado do menu ao carregar a página
-           var activeSubmenu = localStorage.getItem('activeSubmenu');
-           if (activeSubmenu) {
-               $(activeSubmenu).collapse('show'); // Expande o submenu salvo no localStorage
-           }
+           // Recolhe todos os submenus ao carregar a página inicial
+           $('.collapse').collapse('hide');
+           // Remove qualquer submenu ativo salvo no localStorage
+           localStorage.removeItem('activeSubmenu');
        });
     
        // Função para carregar outras páginas dinamicamente
@@ -224,6 +225,8 @@
            $('.collapse').collapse('hide');
            // Remove o submenu ativo do localStorage
            localStorage.removeItem('activeSubmenu');
+           // Carrega a página principal novamente no main-content
+           $('#main-content').load(principalUrl);
        });
     
        // Script para alternar submenus: expande o submenu clicado e recolhe os outros
@@ -231,22 +234,15 @@
            var current = $(this).attr('href'); // Pega o submenu atual
     
            // Recolhe todos os submenus antes de qualquer ação
-           $('.collapse').each(function () {
-               var submenu = $(this).attr('id');
-               if ('#' + submenu !== current) {
-                   $(this).collapse('hide');
-               }
-           });
+           $('.collapse').collapse('hide');
     
-           // Verifica se o submenu atual está expandido ou recolhido
-           if ($(current).hasClass('show')) {
-               // Se o submenu está aberto, recolhe-o e remove do localStorage
-               $(current).collapse('hide');
-               localStorage.removeItem('activeSubmenu');
-           } else {
-               // Se o submenu está fechado, expande o submenu atual e salva no localStorage
+           // Se o submenu atual está fechado, expande o submenu atual e salva no localStorage
+           if (!$(current).hasClass('show')) {
                $(current).collapse('show');
                localStorage.setItem('activeSubmenu', current);
+           } else {
+               // Se o submenu está aberto, apenas remove do localStorage
+               localStorage.removeItem('activeSubmenu');
            }
        });
     </script>
@@ -267,6 +263,6 @@
     
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-                            
+                                    
 </body>
 </html>

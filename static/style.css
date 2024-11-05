@@ -319,13 +319,28 @@ button {
 }
 
 header.banner-header {
-    background: url('imagens/banner_maior.png') no-repeat center center; /* URL da imagem do banner */
-    background-size: cover; /* Ajusta para cobrir todo o espaço */
+    background: url('imagens/banner_maior.png') no-repeat center center;
+    background-size: cover; /* Ajusta para cobrir todo o espaço sem distorcer */
     width: 100%; /* Largura completa */
-    height: 70px; /* Altura do banner */
+    height: 70px; /* Altura fixa para manter a estrutura */
     display: flex;
     align-items: center;
     justify-content: center;
     color: #005f5f;
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); /* Sombra suave */
+}
+
+/* Ajustes para telas menores */
+@media (max-width: 768px) {
+    header.banner-header {
+        height: 50px; /* Reduz altura em telas menores */
+        background-size: contain; /* Mantém a imagem ajustada ao espaço disponível */
+    }
+}
+
+@media (max-width: 480px) {
+    header.banner-header {
+        height: 40px; /* Altura reduzida ainda mais para telas muito pequenas */
+        background-size: contain;
+    }
 }
