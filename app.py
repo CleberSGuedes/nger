@@ -8,9 +8,10 @@ from sqlalchemy.orm import joinedload
 import os
 import secrets
 from uuid import uuid4
-from fip613 import run_fip613  # Importa a funcao do script
+from fip613 import run_fip613
 from sqlalchemy import func
-from fip613 import run_fip613  # Importa a funcao de atualizacao de relatório FIP613
+from werkzeug.utils import secure_filename
+import pandas as pd
 
 app = Flask(__name__)
 app.secret_key = 'guedes90'
@@ -23,6 +24,14 @@ app.config['MAIL_USERNAME'] = 'cleber.guedes@edu.mt.gov.br'
 app.config['MAIL_PASSWORD'] = 'gnbs njed mvkm jwla'
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
+
+# Configuração do diretório de uploads
+app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads')
+app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024 * 1024  # Limite de 1 GB
+
+# Garante que o diretório de upload existe
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
 
 # Inicializações
 db = SQLAlchemy(app)
@@ -335,17 +344,45 @@ def principal():
     return render_template('principal.html')
 
 # Atualizar Relatórios do Fiplan
-@app.route('/executar_fip613')
+@app.route('/executar_fip613', methods=['GET', 'POST'])
+@login_required
 def executar_fip613():
     latest_update = db.session.query(func.max(Fip613.data_atualizacao)).scalar()
+    
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return jsonify(success=False, mensagem="Nenhum arquivo selecionado."), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify(success=False, mensagem="Nenhum arquivo selecionado."), 400
+        
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
+
+            # Processa o arquivo carregado
+            try:
+                run_fip613(file_path)
+                mensagem = "Relatório FIP 613 atualizado com sucesso!"
+                return jsonify(success=True, mensagem=mensagem)
+            except Exception as e:
+                mensagem = f"Erro ao processar o arquivo: {e}"
+                return jsonify(success=False, mensagem=mensagem), 500
+
     return render_template('partials/atualizar_fip613.html', latest_update=latest_update)
 
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() == 'xlsx'
+
 @app.route('/iniciar_fip613', methods=['POST'])
+@login_required
 def iniciar_fip613():
     try:
         run_fip613()
-        mensagem = "Relatório FIP 613 atualizado com sucesso!"  # Define a mensagem de sucesso
-        return jsonify(success=True, mensagem=mensagem)  # Retorna a mensagem no JSON
+        mensagem = "Relatório FIP 613 atualizado com sucesso!"
+        return jsonify(success=True, mensagem=mensagem)
     except Exception as e:
         print(f"Erro ao executar o script: {e}")
         return jsonify(success=False), 500

@@ -12,12 +12,11 @@ sftp_username = "seu_usuario"
 sftp_password = "sua_senha"
 remote_folder_path = "/caminho/no/servidor"
 
-# Diretório local onde o arquivo está armazenado
-local_folder_path = r"C:\Fiplan\fip613"
-# Caminho de saída do arquivo no servidor
+# Caminho de saída do arquivo processado
 output_path = "fip613_limped.xlsx"
 
 def get_latest_file(folder_path):
+    """Encontra o arquivo mais recente no diretório especificado."""
     files = [f for f in os.listdir(folder_path) if f.endswith('.xlsx') and not f.startswith('~$')]
     paths = [os.path.join(folder_path, f) for f in files]
     latest_file = max(paths, key=os.path.getmtime)
@@ -25,6 +24,7 @@ def get_latest_file(folder_path):
     return latest_file
 
 def transfer_file_to_server(local_file, remote_path):
+    """Transfere um arquivo local para o servidor via SFTP."""
     try:
         print("Conectando ao servidor SFTP...")
         transport = paramiko.Transport((sftp_host, sftp_port))
@@ -41,6 +41,7 @@ def transfer_file_to_server(local_file, remote_path):
         print(f"Erro ao transferir o arquivo para o servidor: {e}")
 
 def load_clean_data(file_path, sheet_name="FIPLAN"):
+    """Carrega e limpa os dados do arquivo Excel especificado."""
     print("Carregando e limpando dados da planilha...")
     raw_data = pd.read_excel(file_path, sheet_name=sheet_name, header=None)
     
@@ -111,30 +112,27 @@ def load_clean_data(file_path, sheet_name="FIPLAN"):
         return None
 
 def save_clean_data(data, output_path):
+    """Salva os dados limpos em um novo arquivo Excel."""
     try:
-        # Verifica se o arquivo já existe e remove-o se necessário
         if os.path.exists(output_path):
             os.remove(output_path)
             print(f"Arquivo existente {output_path} removido.")
         
-        # Salva os dados limpos em um novo arquivo Excel
         data.to_excel(output_path, index=False)
         print(f"Arquivo limpo salvo em: {output_path}")
     except Exception as e:
         print(f"Erro ao salvar o arquivo limpo: {e}")
 
 def update_database(data):
-    from app import db, app  # Importa o contexto do banco de dados aqui para evitar a importação circular
+    """Insere os dados no banco de dados."""
+    from app import db, app
     with app.app_context():
         registros_gravados = 0
         print("Iniciando inserção dos registros no banco de dados...")
         
         for i, row in data.iterrows():
             try:
-                # Definir horário local da máquina para 'data_atualizacao'
                 row['data_atualizacao'] = datetime.now()
-
-                # Executar a inserção de dados usando SQLAlchemy e verificando duplicidade
                 db.session.execute(text("""
                     INSERT INTO fip613 (
                         uo, ug, funcao, subfuncao, programa, projeto_atividade, regional, natureza_despesa,
@@ -182,21 +180,17 @@ def update_database(data):
             except SQLAlchemyError as e:
                 print(f"Erro ao inserir o registro na linha {i + 1}: {str(e)}")
         
-        # Confirma as transações no banco de dados
         db.session.commit()
         print(f"Registros processados: {len(data)}, Registros gravados: {registros_gravados}")
         if registros_gravados == 0:
             print("Aviso: Nenhum registro foi gravado no banco de dados.")
 
-def run_fip613():
-    """Função principal para executar todo o processo de atualização dos dados."""
-    latest_file = get_latest_file(local_folder_path)
-    data = load_clean_data(latest_file)
+def run_fip613(file_path):
+    """Função principal para executar todo o processo de atualização dos dados a partir de um arquivo fornecido."""
+    data = load_clean_data(file_path)
     
     if data is not None:
         save_clean_data(data, output_path)
-        
-        # Carrega o arquivo limpo para atualização no banco de dados
         cleaned_data = pd.read_excel(output_path)
         update_database(cleaned_data)
     else:
