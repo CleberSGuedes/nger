@@ -10,3 +10,6 @@ Flask-SQLAlchemy==2.5.1
 Flask-Mail==0.9.1
 selenium
 schedule
+mysql-connector-python
+openpyxl
+paramiko

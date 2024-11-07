@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.5.0/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <title>Página Inicial</title>
     
@@ -98,8 +98,7 @@
 </head>
 
 <body>
-       <!-- Inclua o pop-up de sucesso no layout base -->
-       {% include 'popup_success.html' %}
+    {% include 'popup_success.html' %}
     <div class="d-flex">
         <!-- Menu Lateral -->
         <div class="sidebar p-3" id="sidebar">
@@ -109,49 +108,69 @@
             <h4>NGER</h4>
             <ul class="nav flex-column">
                 <li class="nav-item">
-                    <a class="nav-link active load-page" data-page="{{ url_for('principal') }}" href="{{ url_for('principal') }}">
+                    <a class="nav-link active load-page" data-page="{{ url_for('principal') }}" href="#">
                         <i class="bi bi-house-door"></i>
                         <span>Início</span>
                     </a>
-                                    </li>
+                </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#submenu2" data-toggle="collapse" aria-expanded="false" aria-controls="submenu2">
-                        <i class="bi bi-briefcase"></i>
+                    <a class="nav-link" href="#submenu1" data-toggle="collapse" aria-expanded="false" aria-controls="submenu1">
+                        <i class="bi bi-folder-plus"></i>
                         <span>Cadastro</span>
                     </a>
-                    <ul class="collapse" id="submenu2">
+                    <ul class="collapse" id="submenu1">
                         <li class="nav-item">
-                            <a class="nav-link load-page" data-page="{{ url_for('register') }}">
+                            <a class="nav-link load-page" data-page="{{ url_for('register') }}" href="#">
                                 <i class="bi bi-person-plus"></i>
                                 <span>Usuário</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link load-page" data-page="{{ url_for('edit_user', id=1) }}">
-                                <i class="bi bi-pencil"></i>
+                            <a class="nav-link load-page" data-page="{{ url_for('edit_user', id=1) }}" href="#">
+                                <i class="bi bi-person-gear"></i>
                                 <span>Editar Usuário</span>
                             </a>
-                        </li>                       
+                        </li>
                         <li class="nav-item">
-                            <a class="nav-link load-page" data-page="{{ url_for('add_profile') }}">
-                                <i class="bi bi-person-badge"></i>
+                            <a class="nav-link load-page" data-page="{{ url_for('add_profile') }}" href="#">
+                                <i class="bi bi-person-badge-fill"></i>
                                 <span>Perfil</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link load-page" data-page="{{ url_for('consultar_perfil', id=1) }}">
-                                <i class="bi bi-pencil-square"></i>
+                            <a class="nav-link load-page" data-page="{{ url_for('consultar_perfil', id=1) }}" href="#">
+                                <i class="bi bi-person-rolodex"></i>
                                 <span>Editar Perfil</span>
                             </a>
                         </li>
                     </ul>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#submenu1" data-toggle="collapse" aria-expanded="false" aria-controls="submenu1">
+                    <a class="nav-link" href="#submenu2" data-toggle="collapse" aria-expanded="false" aria-controls="submenu1">
+                        <i class="bi bi-arrow-repeat"></i>
+                        <span>Atualizar</span>
+                    </a>
+                    <ul class="collapse" id="submenu2">
+                        <li class="nav-item">
+                            <a class="nav-link load-page" data-page="{{ url_for('executar_fip613') }}" href="#">
+                                <i class="bi bi-file-earmark-text"></i>
+                                <span>FIP 613</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link load-page" data-page="{{ url_for('edit_user', id=1) }}" href="#">
+                                <i class="bi bi-clipboard-check"></i>
+                                <span>PED Empenho</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#submenu3" data-toggle="collapse" aria-expanded="false" aria-controls="submenu1">
                         <i class="bi bi-info-circle"></i>
                         <span>Sobre</span>
                     </a>
-                    <ul class="collapse" id="submenu1">
+                    <ul class="collapse" id="submenu3">
                         <li class="nav-item">
                             <a class="nav-link" href="#">Nossa História</a>
                         </li>
@@ -179,8 +198,7 @@
                 </div>
             </nav>
 
-            <header class="banner-header">
-            </header>
+            <header class="banner-header"></header>
 
             <div class="container mt-4">
                 <!-- Conteúdo principal -->
@@ -193,62 +211,45 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-       // Definindo a URL para "Início" como uma variável JavaScript
        const principalUrl = "{{ url_for('principal') }}";
     
-       // Carregar a página principal no main-content ao carregar a página home
        $(document).ready(function() {
            $('#main-content').load(principalUrl);
-    
-           // Recolhe todos os submenus ao carregar a página inicial
            $('.collapse').collapse('hide');
-           // Remove qualquer submenu ativo salvo no localStorage
            localStorage.removeItem('activeSubmenu');
        });
     
-       // Função para carregar outras páginas dinamicamente
        $(document).on('click', '.load-page', function(event) {
            event.preventDefault();
            var page = $(this).data('page');
     
            $('#main-content').load(page, function(response, status, xhr) {
                if (status === "error") {
-                   var msg = "Sorry but there was an error: ";
-                   $("#main-content").html(msg + xhr.status + " " + xhr.statusText);
+                   $("#main-content").html("Erro: " + xhr.status + " " + xhr.statusText);
                }
            });
        });
     
-       // Função para recolher todos os submenus ao clicar no menu "Início"
        $(document).on('click', `.nav-link[data-page="${principalUrl}"]`, function() {
-           // Recolhe todos os submenus
            $('.collapse').collapse('hide');
-           // Remove o submenu ativo do localStorage
            localStorage.removeItem('activeSubmenu');
-           // Carrega a página principal novamente no main-content
            $('#main-content').load(principalUrl);
        });
     
-       // Script para alternar submenus: expande o submenu clicado e recolhe os outros
        $(document).on('click', '[data-toggle="collapse"]', function () {
-           var current = $(this).attr('href'); // Pega o submenu atual
-    
-           // Recolhe todos os submenus antes de qualquer ação
+           var current = $(this).attr('href');
            $('.collapse').collapse('hide');
     
-           // Se o submenu atual está fechado, expande o submenu atual e salva no localStorage
            if (!$(current).hasClass('show')) {
                $(current).collapse('show');
                localStorage.setItem('activeSubmenu', current);
            } else {
-               // Se o submenu está aberto, apenas remove do localStorage
                localStorage.removeItem('activeSubmenu');
            }
        });
     </script>
     
     <script>
-        // Função para exibir a data no formato desejado
         function displayDate() {
             const dateElement = document.getElementById('date');
             const today = new Date();
@@ -257,12 +258,26 @@
             dateElement.textContent = formattedDate;
         }
     
-        // Executar a função assim que a página carregar
         window.onload = displayDate;
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-                                    
+    
+    <script>
+        // Exibe um indicador de carregamento opcional para o conteúdo principal
+        $(document).on('click', '.load-page', function(event) {
+            event.preventDefault();
+            var page = $(this).data('page');
+            
+            $('#main-content').html('<div class="loading">Carregando...</div>');
+            
+            $('#main-content').load(page, function(response, status, xhr) {
+                if (status === "error") {
+                    $("#main-content").html("Erro: " + xhr.status + " " + xhr.statusText);
+                }
+            });
+        });
+    </script>
 </body>
 </html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executar FIP613</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="containerlogin">
+        <h2>Atualizar FIP 613</h2>
+        
+        <!-- Exibe a data de atualizacao mais recente -->
+        <p>Relatório atualizado em: {{ latest_update.strftime('%d/%m/%Y %H:%M:%S') if latest_update else 'Não disponível' }}</p>
+        
+        <button id="executeScript" class="button">Iniciar atualizacao!</button>
+    </div>
+
+<!-- Modal de Carregamento -->
+<div class="modal fade" id="loadingModal" tabindex="-1" role="dialog" aria-labelledby="loadingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <p>Aguarde, o relatório está sendo atualizado...</p>
+                <div class="spinner-border" role="status">
+                    <span class="sr-only">Carregando...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Inclui o modal de confirmacao -->
+    {% include 'partials/pagina_confirmacao.html' %}
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        document.getElementById('executeScript').addEventListener('click', function () {
+            // Exibe um pop-up de "carregando" antes de iniciar o processo
+            $('#loadingModal').modal('show');  // Mostra o modal de carregamento
+    
+            fetch('/iniciar_fip613', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    $('#loadingModal').modal('hide');  // Oculta o modal de carregamento
+                    if (data.success) {
+                        // Define a mensagem no modal de confirmacao
+                        document.querySelector('#confirmationModal .modal-body p').textContent = data.mensagem;
+                        $('#confirmationModal').modal('show');  // Exibe o modal de confirmacao
+                    } else {
+                        alert("Erro ao executar o script.");
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    $('#loadingModal').modal('hide');
+                    alert("Erro ao executar o script.");
+                });
+        });
+    </script>
+</body>
+</html>

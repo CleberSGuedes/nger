@@ -7,7 +7,10 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import joinedload
 import os
 import secrets
-from uuid import uuid4  # Para IDs de sessão únicos
+from uuid import uuid4
+from fip613 import run_fip613  # Importa a funcao do script
+from sqlalchemy import func
+from fip613 import run_fip613  # Importa a funcao de atualizacao de relatório FIP613
 
 app = Flask(__name__)
 app.secret_key = 'guedes90'
@@ -25,7 +28,7 @@ app.config['MAIL_USE_SSL'] = True
 db = SQLAlchemy(app)
 mail = Mail(app)
 
-# Configuração do Flask-Login
+# Configuracao do Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -42,7 +45,7 @@ class User(UserMixin, db.Model):
     ip_address = db.Column(db.String(45), nullable=True)
     last_activity = db.Column(db.DateTime, nullable=True)
     is_active = db.Column(db.Boolean, default=False)
-    session_id = db.Column(db.String(36), nullable=True)  # Coluna para armazenar o ID de sessão
+    session_id = db.Column(db.String(36), nullable=True)
 
     profile = db.relationship('Profile', backref='users', lazy=True)
 
@@ -57,6 +60,11 @@ class PasswordResetToken(db.Model):
     token = db.Column(db.String(64), nullable=False, unique=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     expiration_time = db.Column(db.DateTime, nullable=False)
+
+class Fip613(db.Model):
+    __tablename__ = 'fip613'
+    id = db.Column(db.Integer, primary_key=True)
+    data_atualizacao = db.Column(db.DateTime, nullable=False)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -84,7 +92,6 @@ def check_activity():
         current_time = datetime.utcnow()
 
         if last_activity:
-            # Converter para offset-naive para evitar problemas de comparação
             last_activity = last_activity.replace(tzinfo=None) if last_activity.tzinfo else last_activity
 
             if current_time - last_activity > timedelta(minutes=30):
@@ -170,10 +177,10 @@ def forgot_password():
             db.session.add(reset_token)
             db.session.commit()
 
-            msg = Message('Recuperação de Senha', sender=app.config['MAIL_USERNAME'], recipients=[email])
+            msg = Message('Recuperacao de Senha', sender=app.config['MAIL_USERNAME'], recipients=[email])
             msg.body = f'Acesse o link para redefinir sua senha: https://nger.onrender.com/reset-password/{token}'
             mail.send(msg)
-            flash('E-mail de recuperação enviado!', 'success')
+            flash('E-mail de recuperacao enviado!', 'success')
             return redirect(url_for('login'))
         else:
             flash('E-mail não encontrado.', 'error')
@@ -185,7 +192,7 @@ def reset_password(token):
     reset_token = PasswordResetToken.query.filter_by(token=token).first()
     
     if reset_token is None or reset_token.expiration_time < datetime.utcnow():
-        flash('Token de redefinição inválido ou expirado.', 'error')
+        flash('Token de redefinicao inválido ou expirado.', 'error')
         return redirect(url_for('forgot_password'))
 
     if request.method == 'POST':
@@ -193,7 +200,6 @@ def reset_password(token):
         user = User.query.get(reset_token.user_id)
 
         if user:
-            # Correção: utilizando 'pbkdf2:sha256' para criar o hash da nova senha
             user.password = generate_password_hash(new_password, method='pbkdf2:sha256')
             db.session.commit()
             db.session.delete(reset_token)
@@ -209,7 +215,6 @@ def register():
     if request.method == 'POST':
         nome = request.form['nome']
         email = request.form['email']
-        # Correção: utilizando pbkdf2:sha256 para gerar a hash da senha no cadastro
         password = generate_password_hash(request.form['password'], method='pbkdf2:sha256')
         profile_id = request.form['profile_id']
 
@@ -220,12 +225,7 @@ def register():
         return redirect(url_for('home'))
 
     profiles = Profile.query.all()
-    print(f'Perfis encontrados: {len(profiles)}')
-    for profile in profiles:
-        print(f'ID: {profile.id}, Nome: {profile.name}')
-
     return render_template('register.html', profiles=profiles)
-
 
 @app.route('/add_profile', methods=['GET', 'POST'])
 def add_profile():
@@ -239,7 +239,6 @@ def add_profile():
         return redirect(url_for('home'))
     return render_template('add_profile.html')
 
-# Rota para usuário
 @app.route('/edit_user/<int:id>', methods=['GET', 'POST'])
 def edit_user(id):
     user = User.query.get_or_404(id)
@@ -251,7 +250,6 @@ def edit_user(id):
         return redirect(url_for('edit_user', id=user.id))
     return render_template('edit_user.html', user=user)
 
-# Rota para editar usuário com AJAX
 @app.route('/editar_user/<int:id>', methods=['GET', 'POST'])
 def editar_user(id):
     user = User.query.get_or_404(id)
@@ -265,12 +263,10 @@ def editar_user(id):
     profiles = Profile.query.all()
     return render_template('partials/editar_user.html', user=user, profiles=profiles)
 
-# Rota para buscar usuários
 @app.route('/search_user', methods=['GET'])
 def search_user():
     query = request.args.get('query', '').strip()
     
-    # Se houver um termo de busca, faz o filtro
     if query:
         users = User.query.join(Profile).filter(
             (User.nome.ilike(f'%{query}%')) |
@@ -282,28 +278,21 @@ def search_user():
 
     return render_template('partials/user_table.html', users=users)
 
-# Rota para excluir usuário
 @app.route('/delete_user', methods=['POST'])
 def delete_user():
     user_id = request.form['user_id']
     
-    # Excluir tokens de redefinição de senha relacionados ao usuário
     PasswordResetToken.query.filter_by(user_id=user_id).delete()
-    
-    # Excluir o usuário
     user = User.query.get_or_404(user_id)
     db.session.delete(user)
     db.session.commit()
     
     return {'status': 'success'}, 200
 
-
-# Rota para consultar perfis
 @app.route('/search_profile', methods=['GET'])
 def search_profile():
     query = request.args.get('query', '').strip()
 
-    # Se houver um termo de busca, faz o filtro
     if query:
         profiles = Profile.query.filter(Profile.name.ilike(f'%{query}%')).all()
     else:
@@ -311,7 +300,6 @@ def search_profile():
 
     return render_template('partials/profile_table.html', profiles=profiles)
 
-# Rota para editar perfil
 @app.route('/edit_profile/<int:id>', methods=['GET', 'POST'])
 def edit_profile(id):
     profile = Profile.query.get_or_404(id)
@@ -323,7 +311,6 @@ def edit_profile(id):
 
     return render_template('partials/edit_profile.html', profile=profile)
 
-# Rota para excluir perfil
 @app.route('/delete_profile', methods=['POST'])
 def delete_profile():
     profile_id = request.form['profile_id']
@@ -332,24 +319,40 @@ def delete_profile():
     db.session.commit()
     return {'status': 'success'}, 200
 
-# Rota para consultar perfis
 @app.route('/consultar_perfil', methods=['GET'])
 def consultar_perfil():
     query = request.args.get('query', '').strip()
 
-    # Se houver um termo de busca, faz o filtro
     if query:
         profiles = Profile.query.filter(Profile.name.ilike(f'%{query}%')).all()
     else:
-        profiles = Profile.query.all()  # Carrega todos os perfis se não houver busca
+        profiles = Profile.query.all()
 
     return render_template('partials/consultar_perfil.html', profiles=profiles)
 
-# Rota para página principal
 @app.route('/principal')
 def principal():
     return render_template('principal.html')
 
+# Atualizar Relatórios do Fiplan
+@app.route('/executar_fip613')
+def executar_fip613():
+    latest_update = db.session.query(func.max(Fip613.data_atualizacao)).scalar()
+    return render_template('partials/atualizar_fip613.html', latest_update=latest_update)
+
+@app.route('/iniciar_fip613', methods=['POST'])
+def iniciar_fip613():
+    try:
+        run_fip613()
+        mensagem = "Relatório FIP 613 atualizado com sucesso!"  # Define a mensagem de sucesso
+        return jsonify(success=True, mensagem=mensagem)  # Retorna a mensagem no JSON
+    except Exception as e:
+        print(f"Erro ao executar o script: {e}")
+        return jsonify(success=False), 500
+
+@app.route('/pagina_confirmacao')
+def pagina_confirmacao():
+    return render_template('partials/pagina_confirmacao.html', mensagem="Script executado com sucesso!")
 
 if __name__ == '__main__':
     with app.app_context():
