@@ -13,3 +13,4 @@ schedule
 mysql-connector-python
 openpyxl
 paramiko
+numpy==1.24.3
