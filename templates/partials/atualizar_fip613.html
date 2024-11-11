@@ -10,79 +10,66 @@
     <div class="containerlogin">
         <h2>Atualizar FIP 613</h2><br>
         
-        <!-- Exibe a data de atualizacao mais recente -->
-        <p>Relatório atualizado em: {{ latest_update.strftime('%d/%m/%Y %H:%M:%S') if latest_update else 'Não disponível' }}</p>
+        <!-- Exibe a data de modificação do arquivo mais recente do banco de dados -->
+        <p>Última data do arquivo: {{ latest_data_arquivo.strftime('%d/%m/%Y %H:%M:%S') if latest_data_arquivo else 'Não disponível' }}</p>
+
+        <!-- Exibe a data de atualização mais recente do banco de dados -->
+        <p>Relatório atualizado em: {{ latest_data_atualizacao.strftime('%d/%m/%Y %H:%M:%S') if latest_data_atualizacao else 'Não disponível' }}</p>
+        <p>Atualizado por: {{ latest_user if latest_user else 'Desconhecido' }}</p>
 
         <!-- Formulário de Upload -->
         <form id="uploadForm" method="post" enctype="multipart/form-data">
             <label for="file">Selecione o arquivo FIP613 (até 1 GB):</label>
             <input type="file" name="file" id="file" required><br><br>
+
+            <!-- Campo manual para data e hora de download -->
+            <label for="manualModifiedDate">Data de Download do Arquivo:</label>
+            <input type="datetime-local" id="manualModifiedDate" name="manualModifiedDate" required><br><br>
+
             <button type="submit" class="button">Upload e Atualizar</button>
         </form><br>
 
-        <!-- Botão para Iniciar Atualização Automática -->
-        <!-- <button id="executeScript" class="button">Atualizar sem Upload</button> -->
-    </div>
-
-    <!-- Modal de Carregamento -->
-    <div class="modal fade" id="loadingModal" tabindex="-1" role="dialog" aria-labelledby="loadingModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-body text-center">
-                    <p>Aguarde, o relatório está sendo atualizado...</p>
-                    <div class="spinner-border" role="status">
-                        <span class="sr-only">Carregando...</span>
+        <!-- Modal de Carregamento -->
+        <div class="modal fade" id="loadingModal" tabindex="-1" role="dialog" aria-labelledby="loadingModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-body text-center">
+                        <p>Aguarde, o relatório está sendo atualizado...</p>
+                        <div class="spinner-border" role="status">
+                            <span class="sr-only">Carregando...</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Inclui o modal de confirmacao -->
-    {% include 'partials/pagina_confirmacao.html' %}
+        <!-- Inclui o modal de confirmação -->
+        {% include 'partials/pagina_confirmacao.html' %}
 
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script>
-        // Exibe o modal de carregamento ao enviar o formulário de upload
-        document.getElementById('uploadForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // Previne o envio padrão do formulário
-            $('#loadingModal').modal('show');  // Mostra o modal de carregamento
-
-            // Envia o formulário via AJAX
-            const formData = new FormData(this);
-            fetch("{{ url_for('executar_fip613') }}", {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                $('#loadingModal').modal('hide');  // Oculta o modal de carregamento
-                if (data.success) {
-                    document.querySelector('#confirmationModal .modal-body p').textContent = data.mensagem;
-                    $('#confirmationModal').modal('show');  // Exibe o modal de confirmacao
-                } else {
-                    alert("Erro ao executar o script.");
+        <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        <script>
+            document.getElementById('uploadForm').addEventListener('submit', function(event) {
+                event.preventDefault(); // Previne o envio padrão do formulário
+                const modifiedDateValue = document.getElementById('manualModifiedDate').value;
+                
+                if (!modifiedDateValue) {
+                    alert("Por favor, insira a data de modificação do arquivo.");
+                    return;
                 }
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                $('#loadingModal').modal('hide');
-                alert("Erro ao executar o script.");
-            });
-        });
-
-        // Botão para iniciar atualização automática
-        document.getElementById('executeScript').addEventListener('click', function () {
-            $('#loadingModal').modal('show');  // Mostra o modal de carregamento
-
-            fetch('/iniciar_fip613', { method: 'POST' })
+                
+                $('#loadingModal').modal('show');  // Mostra o modal de carregamento
+                const formData = new FormData(this);
+                fetch("{{ url_for('executar_fip613') }}", {
+                    method: 'POST',
+                    body: formData
+                })
                 .then(response => response.json())
                 .then(data => {
                     $('#loadingModal').modal('hide');  // Oculta o modal de carregamento
                     if (data.success) {
                         document.querySelector('#confirmationModal .modal-body p').textContent = data.mensagem;
-                        $('#confirmationModal').modal('show');  // Exibe o modal de confirmacao
+                        $('#confirmationModal').modal('show');  // Exibe o modal de confirmação
                     } else {
                         alert("Erro ao executar o script.");
                     }
@@ -92,7 +79,8 @@
                     $('#loadingModal').modal('hide');
                     alert("Erro ao executar o script.");
                 });
-        });
-    </script>
+            });
+        </script>
+    </div>
 </body>
 </html>

@@ -1,15 +1,17 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, session as flask_session, jsonify
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_mail import Mail, Message
 from datetime import datetime, timedelta
+import pytz  # Import necessário para manipular fusos horários
 from sqlalchemy.orm import joinedload
+from sqlalchemy import func
 import os
 import secrets
 from uuid import uuid4
 from fip613 import run_fip613
-from sqlalchemy import func
 from werkzeug.utils import secure_filename
 import pandas as pd
 
@@ -33,11 +35,15 @@ app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024 * 1024  # Limite de 1 GB
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
+# Defina o fuso horário local para Cuiabá
+local_timezone = pytz.timezone("America/Cuiaba")
+
 # Inicializações
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 mail = Mail(app)
 
-# Configuracao do Flask-Login
+# Configuração do Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -74,6 +80,10 @@ class Fip613(db.Model):
     __tablename__ = 'fip613'
     id = db.Column(db.Integer, primary_key=True)
     data_atualizacao = db.Column(db.DateTime, nullable=False)
+    ano = db.Column(db.Integer, nullable=True)
+    data_arquivo = db.Column(db.DateTime, nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  # Registro do usuário que fez a última atualização
+    user = db.relationship("User", backref="fip613_updates")
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -90,7 +100,7 @@ def check_activity():
         return None
 
     if current_user.is_authenticated:
-        user_from_db = User.query.get(current_user.id)
+        user_from_db = db.session.get(User, current_user.id)
         if user_from_db and user_from_db.session_id != flask_session.get('session_id'):
             logout_user()
             flask_session.clear()
@@ -102,7 +112,6 @@ def check_activity():
 
         if last_activity:
             last_activity = last_activity.replace(tzinfo=None) if last_activity.tzinfo else last_activity
-
             if current_time - last_activity > timedelta(minutes=30):
                 user_from_db.is_active = False
                 user_from_db.session_id = None
@@ -347,34 +356,74 @@ def principal():
 @app.route('/executar_fip613', methods=['GET', 'POST'])
 @login_required
 def executar_fip613():
-    latest_update = db.session.query(func.max(Fip613.data_atualizacao)).scalar()
-    
+    # Obtém a última data de modificação e o último usuário
+    latest_data_arquivo = db.session.query(func.max(Fip613.data_arquivo)).scalar()
+    latest_data_atualizacao = db.session.query(func.max(Fip613.data_atualizacao)).scalar()
+    latest_user = db.session.query(Fip613).order_by(Fip613.data_atualizacao.desc()).first().user.nome if latest_data_atualizacao else None
+
     if request.method == 'POST':
-        if 'file' not in request.files:
-            return jsonify(success=False, mensagem="Nenhum arquivo selecionado."), 400
-        
+        if 'file' not in request.files or 'manualModifiedDate' not in request.form:
+            return jsonify(success=False, mensagem='Arquivo ou data de modificação não selecionados.')
+
         file = request.files['file']
         if file.filename == '':
-            return jsonify(success=False, mensagem="Nenhum arquivo selecionado."), 400
-        
+            return jsonify(success=False, mensagem='Nenhum arquivo selecionado.')
+
+        # Obtenha a data de modificação do formulário
+        manual_modified_date_str = request.form['manualModifiedDate']
+        try:
+            data_arquivo = datetime.fromisoformat(manual_modified_date_str)
+        except ValueError:
+            return jsonify(success=False, mensagem='Data de modificação inválida.')
+
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(file_path)
 
-            # Processa o arquivo carregado
+            # Verifica se a data de modificação do novo arquivo é diferente da última data registrada
+            if latest_data_arquivo and data_arquivo != latest_data_arquivo:
+                try:
+                    # Apaga todos os registros da tabela para evitar duplicidade ou dados incorretos
+                    db.session.execute('TRUNCATE TABLE fip613')
+                    db.session.commit()
+                    print("Tabela fip613 truncada devido a nova data de modificação do arquivo.")
+                except Exception as e:
+                    print(f"Erro ao truncar a tabela: {e}")
+                    return jsonify(success=False, mensagem=f'Erro ao truncar a tabela: {e}')
+
             try:
-                run_fip613(file_path)
-                mensagem = "Relatório FIP 613 atualizado com sucesso!"
-                return jsonify(success=True, mensagem=mensagem)
-            except Exception as e:
-                mensagem = f"Erro ao processar o arquivo: {e}"
-                return jsonify(success=False, mensagem=mensagem), 500
+                # Salva o arquivo
+                file.save(file_path)
 
-    return render_template('partials/atualizar_fip613.html', latest_update=latest_update)
+                # Processa o arquivo carregado e registra o ID do usuário atual
+                run_fip613(file_path, data_arquivo, db)
+
+                # Adiciona uma entrada para o relatório com o usuário responsável pela atualização
+                fip_record = Fip613(
+                    data_arquivo=data_arquivo,
+                    data_atualizacao=datetime.now(),
+                    user_id=current_user.id  # Registra o usuário que fez o upload
+                )
+                db.session.add(fip_record)
+                db.session.commit()
+
+                # Retorna resposta JSON para exibir modal de confirmação
+                return jsonify(success=True, mensagem='Relatório FIP 613 atualizado com sucesso!')
+            except Exception as e:
+                print(f"Erro ao salvar ou processar o arquivo: {e}")
+                return jsonify(success=False, mensagem=f'Erro ao processar o arquivo: {e}')
+
+    return render_template(
+        'partials/atualizar_fip613.html',
+        latest_data_arquivo=latest_data_arquivo,
+        latest_data_atualizacao=latest_data_atualizacao,
+        latest_user=latest_user  # Passa o nome do último usuário para o template
+    )
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() == 'xlsx'
+
 
 @app.route('/iniciar_fip613', methods=['POST'])
 @login_required
@@ -385,7 +434,7 @@ def iniciar_fip613():
         return jsonify(success=True, mensagem=mensagem)
     except Exception as e:
         print(f"Erro ao executar o script: {e}")
-        return jsonify(success=False), 500
+        return jsonify(success=False, mensagem=f"Erro ao executar o script: {e}")
 
 @app.route('/pagina_confirmacao')
 def pagina_confirmacao():
