@@ -13,7 +13,7 @@ sftp_password = "sua_senha"
 remote_folder_path = "/caminho/no/servidor"
 
 output_path = "fip613_limped.xlsx"
-BATCH_SIZE = 100
+BATCH_SIZE = 50
 
 def get_file_creation_date(file_path):
     """Obtém a data e hora de criação do arquivo."""
@@ -114,11 +114,16 @@ def save_clean_data(data, output_path):
     except Exception as e:
         print(f"Erro ao salvar o arquivo limpo: {e}")
 
-def update_database(data, ano, data_arquivo, db):
-    """Insere os dados no banco de dados em lotes, incluindo ano e data_arquivo."""
+def update_database(data, ano, data_arquivo, db, user_id):
+    """Insere os dados no banco de dados em lotes, incluindo ano, data_arquivo e user_id."""
     registros_gravados = 0
     print("Iniciando inserção dos registros no banco de dados em lotes...")
     
+    # Limpa a tabela se o arquivo de upload tiver uma data de modificação diferente do que está no banco
+    db.session.execute(text("TRUNCATE TABLE fip613"))
+    db.session.commit()
+    print("Tabela fip613 truncada devido à nova data de modificação do arquivo.")
+
     for start in range(0, len(data), BATCH_SIZE):
         batch_data = data.iloc[start:start + BATCH_SIZE]
         for _, row in batch_data.iterrows():
@@ -126,19 +131,20 @@ def update_database(data, ano, data_arquivo, db):
                 row['data_atualizacao'] = datetime.now()
                 row['ano'] = ano
                 row['data_arquivo'] = data_arquivo
+                row['user_id'] = user_id
                 db.session.execute(text("""
                     INSERT INTO fip613 (
                         uo, ug, funcao, subfuncao, programa, projeto_atividade, regional, natureza_despesa,
                         fonte_recurso, iduso, tipo_recurso, dotacao_inicial, cred_suplementar, cred_especial,
                         cred_extraordinario, reducao, cred_autorizado, bloqueado_conting, reserva_empenho,
                         saldo_destaque, saldo_dotacao, empenhado, liquidado, a_liquidar, valor_pago,
-                        valor_a_pagar, data_atualizacao, ano, data_arquivo
+                        valor_a_pagar, data_atualizacao, ano, data_arquivo, user_id
                     ) VALUES (
                         :uo, :ug, :funcao, :subfuncao, :programa, :projeto_atividade, :regional, :natureza_despesa,
                         :fonte_recurso, :iduso, :tipo_recurso, :dotacao_inicial, :cred_suplementar, :cred_especial,
                         :cred_extraordinario, :reducao, :cred_autorizado, :bloqueado_conting, :reserva_empenho,
                         :saldo_destaque, :saldo_dotacao, :empenhado, :liquidado, :a_liquidar, :valor_pago,
-                        :valor_a_pagar, :data_atualizacao, :ano, :data_arquivo
+                        :valor_a_pagar, :data_atualizacao, :ano, :data_arquivo, :user_id
                     )
                     ON DUPLICATE KEY UPDATE
                         funcao = VALUES(funcao),
@@ -167,7 +173,8 @@ def update_database(data, ano, data_arquivo, db):
                         valor_a_pagar = VALUES(valor_a_pagar),
                         data_atualizacao = :data_atualizacao,
                         ano = :ano,
-                        data_arquivo = :data_arquivo
+                        data_arquivo = :data_arquivo,
+                        user_id = :user_id
                 """), row.to_dict())
                 
                 registros_gravados += 1
@@ -179,7 +186,7 @@ def update_database(data, ano, data_arquivo, db):
     
     print(f"Total de registros gravados: {registros_gravados}")
 
-def run_fip613(file_path, data_arquivo, db):
+def run_fip613(file_path, data_arquivo, db, user_id):
     """Função principal para executar todo o processo de atualização dos dados a partir de um arquivo fornecido."""
     ano = get_year_from_file(file_path)
     data = load_clean_data(file_path)
@@ -187,6 +194,6 @@ def run_fip613(file_path, data_arquivo, db):
     if data is not None and ano is not None:
         save_clean_data(data, output_path)
         cleaned_data = pd.read_excel(output_path)
-        update_database(cleaned_data, ano, data_arquivo, db)
+        update_database(cleaned_data, ano, data_arquivo, db, user_id)
     else:
         print("Erro: Não foi possível carregar dados limpos da planilha.")

@@ -356,10 +356,13 @@ def principal():
 @app.route('/executar_fip613', methods=['GET', 'POST'])
 @login_required
 def executar_fip613():
-    # Obtém a última data de modificação e o último usuário
-    latest_data_arquivo = db.session.query(func.max(Fip613.data_arquivo)).scalar()
-    latest_data_atualizacao = db.session.query(func.max(Fip613.data_atualizacao)).scalar()
-    latest_user = db.session.query(Fip613).order_by(Fip613.data_atualizacao.desc()).first().user.nome if latest_data_atualizacao else None
+    # Obtém o registro mais recente com base na data de atualização
+    latest_entry = db.session.query(Fip613).order_by(Fip613.data_atualizacao.desc()).first()
+    
+    # Extrai informações de data e usuário, se o registro existir
+    latest_data_arquivo = latest_entry.data_arquivo if latest_entry else None
+    latest_data_atualizacao = latest_entry.data_atualizacao if latest_entry else None
+    latest_user = latest_entry.user.nome if latest_entry and latest_entry.user else 'Usuário desconhecido'
 
     if request.method == 'POST':
         if 'file' not in request.files or 'manualModifiedDate' not in request.form:
@@ -380,32 +383,12 @@ def executar_fip613():
             filename = secure_filename(file.filename)
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
-            # Verifica se a data de modificação do novo arquivo é diferente da última data registrada
-            if latest_data_arquivo and data_arquivo != latest_data_arquivo:
-                try:
-                    # Apaga todos os registros da tabela para evitar duplicidade ou dados incorretos
-                    db.session.execute('TRUNCATE TABLE fip613')
-                    db.session.commit()
-                    print("Tabela fip613 truncada devido a nova data de modificação do arquivo.")
-                except Exception as e:
-                    print(f"Erro ao truncar a tabela: {e}")
-                    return jsonify(success=False, mensagem=f'Erro ao truncar a tabela: {e}')
-
             try:
                 # Salva o arquivo
                 file.save(file_path)
 
-                # Processa o arquivo carregado e registra o ID do usuário atual
-                run_fip613(file_path, data_arquivo, db)
-
-                # Adiciona uma entrada para o relatório com o usuário responsável pela atualização
-                fip_record = Fip613(
-                    data_arquivo=data_arquivo,
-                    data_atualizacao=datetime.now(),
-                    user_id=current_user.id  # Registra o usuário que fez o upload
-                )
-                db.session.add(fip_record)
-                db.session.commit()
+                # Processa o arquivo carregado
+                run_fip613(file_path, data_arquivo, db, user_id=current_user.id)  # Passe o ID do usuário logado
 
                 # Retorna resposta JSON para exibir modal de confirmação
                 return jsonify(success=True, mensagem='Relatório FIP 613 atualizado com sucesso!')
@@ -417,7 +400,7 @@ def executar_fip613():
         'partials/atualizar_fip613.html',
         latest_data_arquivo=latest_data_arquivo,
         latest_data_atualizacao=latest_data_atualizacao,
-        latest_user=latest_user  # Passa o nome do último usuário para o template
+        latest_user=latest_user
     )
 
 
