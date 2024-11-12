@@ -236,11 +236,18 @@ def register():
         password = generate_password_hash(request.form['password'], method='pbkdf2:sha256')
         profile_id = request.form['profile_id']
 
-        new_user = User(nome=nome, email=email, password=password, profile_id=profile_id)
-        db.session.add(new_user)
-        db.session.commit()
-        flash('Usuário cadastrado com sucesso!')
-        return redirect(url_for('home'))
+        # Verifica se o email já existe no banco
+        if User.query.filter_by(email=email).first():
+            return jsonify(success=False, mensagem="O email já está em uso. Escolha outro.")
+
+        try:
+            new_user = User(nome=nome, email=email, password=password, profile_id=profile_id)
+            db.session.add(new_user)
+            db.session.commit()
+            return jsonify(success=True, mensagem="Usuário cadastrado com sucesso!")
+        except Exception as e:
+            print(f"Erro ao cadastrar usuário: {e}")
+            return jsonify(success=False, mensagem="Erro ao cadastrar usuário.")
 
     profiles = Profile.query.all()
     return render_template('register.html', profiles=profiles)
@@ -250,11 +257,20 @@ def add_profile():
     if request.method == 'POST':
         name = request.form['name']
         level = request.form['level']
-        new_profile = Profile(name=name, level=level)
-        db.session.add(new_profile)
-        db.session.commit()
-        flash('Perfil cadastrado com sucesso!')
-        return redirect(url_for('home'))
+
+        # Verifica se o nome do perfil já existe
+        if Profile.query.filter_by(name=name).first():
+            return jsonify(success=False, mensagem="Erro: Este perfil já existe.")
+
+        try:
+            new_profile = Profile(name=name, level=level)
+            db.session.add(new_profile)
+            db.session.commit()
+            return jsonify(success=True, mensagem="Perfil cadastrado com sucesso!")
+        except Exception as e:
+            print(f"Erro ao cadastrar perfil: {e}")
+            return jsonify(success=False, mensagem="Erro ao cadastrar perfil.")
+
     return render_template('add_profile.html')
 
 @app.route('/edit_user/<int:id>', methods=['GET', 'POST'])
@@ -387,8 +403,11 @@ def executar_fip613():
                 # Salva o arquivo
                 file.save(file_path)
 
-                # Processa o arquivo carregado
-                run_fip613(file_path, data_arquivo, db, user_id=current_user.id)  # Passe o ID do usuário logado
+                # Converte a data e hora local para o fuso horário UTC-4 antes de enviar para o banco
+                data_atualizacao_local = datetime.now(local_timezone)
+
+                # Processa o arquivo carregado com a data de atualização e o ID do usuário logado
+                run_fip613(file_path, data_arquivo, db, user_id=current_user.id, data_atualizacao=data_atualizacao_local)
 
                 # Retorna resposta JSON para exibir modal de confirmação
                 return jsonify(success=True, mensagem='Relatório FIP 613 atualizado com sucesso!')
@@ -402,7 +421,6 @@ def executar_fip613():
         latest_data_atualizacao=latest_data_atualizacao,
         latest_user=latest_user
     )
-
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() == 'xlsx'
@@ -421,9 +439,10 @@ def iniciar_fip613():
 
 @app.route('/pagina_confirmacao')
 def pagina_confirmacao():
-    return render_template('partials/pagina_confirmacao.html', mensagem="Script executado com sucesso!")
+    return render_template('partials/pagina_confirmacao.html', mensagem="Registro gravado com sucesso!")
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+    # app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000)

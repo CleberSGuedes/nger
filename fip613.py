@@ -114,11 +114,11 @@ def save_clean_data(data, output_path):
     except Exception as e:
         print(f"Erro ao salvar o arquivo limpo: {e}")
 
-def update_database(data, ano, data_arquivo, db, user_id):
-    """Insere os dados no banco de dados em lotes, incluindo ano, data_arquivo e user_id."""
+def update_database(data, ano, data_arquivo, db, user_id, data_atualizacao):
+    """Insere os dados no banco de dados em lotes, incluindo ano, data_arquivo, user_id e data_atualizacao."""
     registros_gravados = 0
     print("Iniciando inserção dos registros no banco de dados em lotes...")
-    
+
     # Limpa a tabela se o arquivo de upload tiver uma data de modificação diferente do que está no banco
     db.session.execute(text("TRUNCATE TABLE fip613"))
     db.session.commit()
@@ -128,7 +128,7 @@ def update_database(data, ano, data_arquivo, db, user_id):
         batch_data = data.iloc[start:start + BATCH_SIZE]
         for _, row in batch_data.iterrows():
             try:
-                row['data_atualizacao'] = datetime.now()
+                row['data_atualizacao'] = data_atualizacao  # Usa a data no fuso horário correto
                 row['ano'] = ano
                 row['data_arquivo'] = data_arquivo
                 row['user_id'] = user_id
@@ -186,7 +186,7 @@ def update_database(data, ano, data_arquivo, db, user_id):
     
     print(f"Total de registros gravados: {registros_gravados}")
 
-def run_fip613(file_path, data_arquivo, db, user_id):
+def run_fip613(file_path, data_arquivo, db, user_id, data_atualizacao):
     """Função principal para executar todo o processo de atualização dos dados a partir de um arquivo fornecido."""
     ano = get_year_from_file(file_path)
     data = load_clean_data(file_path)
@@ -194,6 +194,6 @@ def run_fip613(file_path, data_arquivo, db, user_id):
     if data is not None and ano is not None:
         save_clean_data(data, output_path)
         cleaned_data = pd.read_excel(output_path)
-        update_database(cleaned_data, ano, data_arquivo, db, user_id)
+        update_database(cleaned_data, ano, data_arquivo, db, user_id, data_atualizacao)
     else:
         print("Erro: Não foi possível carregar dados limpos da planilha.")
