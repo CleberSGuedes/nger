@@ -39,13 +39,18 @@
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Erro ao processar a solicitação");
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     document.querySelector('#confirmationModal .modal-body p').textContent = data.mensagem;
-                    $('#confirmationModal').modal('show');  // Exibe o modal de confirmação
+                    $('#confirmationModal').modal('show');  // Exibe o modal de confirmação em caso de sucesso
                 } else {
-                    alert(data.mensagem);  // Exibe popup de alerta em caso de erro
+                    alert(data.mensagem || "Erro ao cadastrar perfil.");  // Exibe popup de alerta em caso de erro
                 }
             })
             .catch(error => {

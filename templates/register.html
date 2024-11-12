@@ -46,18 +46,24 @@
         document.getElementById('registerForm').addEventListener('submit', function(event) {
             event.preventDefault(); // Previne o envio padrão do formulário
             const formData = new FormData(this);
-
+    
             fetch("{{ url_for('register') }}", {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Erro ao processar a solicitação");
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     // Exibe o modal de confirmação com a mensagem de sucesso
                     document.querySelector('#confirmationModal .modal-body p').textContent = data.mensagem;
                     $('#confirmationModal').modal('show');
                 } else {
+                    // Exibe a mensagem de erro no formato de popup
                     alert(data.mensagem || "Erro ao cadastrar o usuário.");
                 }
             })
@@ -67,5 +73,6 @@
             });
         });
     </script>
+    
 </body>
 </html>
