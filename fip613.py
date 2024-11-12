@@ -11,9 +11,19 @@ sftp_username = "seu_usuario"
 sftp_password = "sua_senha"
 remote_folder_path = "/caminho/no/servidor"
 
-# Define o caminho absoluto para o arquivo de saída
-output_path = os.path.join(os.getcwd(), "fip613_limped.xlsx")
+# Define o diretório e caminho absoluto para o arquivo de saída
+output_directory = os.path.join(os.getcwd(), "outputs")  # Usa uma pasta "outputs" para organizar melhor
+output_path = os.path.join(output_directory, "fip613_limped.xlsx")
 BATCH_SIZE = 80
+
+# Função para garantir que o diretório de saída existe
+def ensure_output_directory():
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+        print(f"Diretório de saída criado em: {output_directory}")
+
+# Garante que o diretório seja criado no início
+ensure_output_directory()
 
 def get_file_creation_date(file_path):
     """Obtém a data e hora de criação do arquivo."""
@@ -105,8 +115,7 @@ def load_clean_data(file_path, sheet_name="FIPLAN"):
 def save_clean_data(data, output_path):
     """Salva os dados limpos em um novo arquivo Excel."""
     try:
-        # Garante que o diretório para salvar o arquivo existe
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        ensure_output_directory()  # Garante que o diretório exista antes de salvar
         if os.path.exists(output_path):
             os.remove(output_path)
             print(f"Arquivo existente {output_path} removido.")
