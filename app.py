@@ -96,7 +96,8 @@ def home():
 
 @app.before_request
 def check_activity():
-    if request.endpoint in ('static', 'login', 'confirm_login'):
+    # Inclui 'forgot_password' na lista de exceções para não bloquear a navegação para essa rota
+    if request.endpoint in ('static', 'login', 'confirm_login', 'forgot_password'):
         return None
 
     if current_user.is_authenticated:
@@ -183,6 +184,9 @@ def logout():
 
 @app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
+    if current_user.is_authenticated:
+        logout_user()  # Garante que o usuário está desconectado antes de redefinir a senha.
+
     if request.method == 'POST':
         email = request.form['email']
         user = User.query.filter_by(email=email).first()
@@ -195,16 +199,18 @@ def forgot_password():
             db.session.add(reset_token)
             db.session.commit()
 
-            msg = Message('Recuperacao de Senha', sender=app.config['MAIL_USERNAME'], recipients=[email])
-            msg.body = f'Acesse o link para redefinir sua senha: https://nger.onrender.com/reset-password/{token}'
+            reset_url = url_for('reset_password', token=token, _external=True)
+            msg = Message('Recuperação de Senha', sender=app.config['MAIL_USERNAME'], recipients=[email])
+            msg.body = f'Acesse o link para redefinir sua senha: {reset_url}'
             mail.send(msg)
-            flash('E-mail de recuperacao enviado!', 'success')
+            
+            flash('E-mail de recuperação enviado!', 'success')
             return redirect(url_for('login'))
         else:
             flash('E-mail não encontrado.', 'error')
         
     return render_template('forgot_password.html')
-
+    
 @app.route('/reset-password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
     reset_token = PasswordResetToken.query.filter_by(token=token).first()
