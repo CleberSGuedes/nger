@@ -44,34 +44,37 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
         document.getElementById('registerForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // Previne o envio padrão do formulário
-            const formData = new FormData(this);
-    
-            fetch("{{ url_for('register') }}", {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error("Erro ao processar a solicitação");
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    // Exibe o modal de confirmação com a mensagem de sucesso
-                    document.querySelector('#confirmationModal .modal-body p').textContent = data.mensagem;
-                    $('#confirmationModal').modal('show');
-                } else {
-                    // Exibe a mensagem de erro no formato de popup
-                    alert(data.mensagem || "Erro ao cadastrar o usuário.");
-                }
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                alert("Erro ao cadastrar o usuário.");
-            });
-        });
+    event.preventDefault(); // Previne o envio padrão do formulário
+    const formData = new FormData(this);
+
+    fetch("{{ url_for('register') }}", {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        console.log("Response Status:", response.status); // Verifica o status da resposta
+        if (!response.ok) {
+            throw new Error("Erro ao processar a solicitação");
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log("Data received from server:", data); // Verifica o conteúdo do `data`
+        if (data.success) {
+            // Exibe o modal de confirmação com a mensagem de sucesso
+            document.querySelector('#confirmationModal .modal-body p').textContent = data.mensagem;
+            $('#confirmationModal').modal('show');
+        } else {
+            // Exibe a mensagem de erro no formato de popup
+            alert(data.mensagem || "Erro ao cadastrar o usuário.");
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert("Erro ao cadastrar o usuário.");
+    });
+});
+
     </script>
     
 </body>

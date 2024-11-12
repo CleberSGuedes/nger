@@ -35,9 +35,6 @@ app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024 * 1024  # Limite de 1 GB
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
-# Defina o fuso horário local para Cuiabá
-local_timezone = pytz.timezone("America/Cuiaba")
-
 # Inicializações
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -378,44 +375,40 @@ def principal():
 @app.route('/executar_fip613', methods=['GET', 'POST'])
 @login_required
 def executar_fip613():
-    # Obtém o registro mais recente com base na data de atualização
     latest_entry = db.session.query(Fip613).order_by(Fip613.data_atualizacao.desc()).first()
-    
-    # Extrai informações de data e usuário, se o registro existir
     latest_data_arquivo = latest_entry.data_arquivo if latest_entry else None
     latest_data_atualizacao = latest_entry.data_atualizacao if latest_entry else None
     latest_user = latest_entry.user.nome if latest_entry and latest_entry.user else 'Usuário desconhecido'
 
     if request.method == 'POST':
-        if 'file' not in request.files or 'manualModifiedDate' not in request.form:
+        if 'file' not in request.files or 'manualModifiedDate' not in request.form or 'localDateTime' not in request.form:
             return jsonify(success=False, mensagem='Arquivo ou data de modificação não selecionados.')
 
         file = request.files['file']
         if file.filename == '':
             return jsonify(success=False, mensagem='Nenhum arquivo selecionado.')
 
-        # Obtenha a data de modificação do formulário
         manual_modified_date_str = request.form['manualModifiedDate']
         try:
             data_arquivo = datetime.fromisoformat(manual_modified_date_str)
         except ValueError:
             return jsonify(success=False, mensagem='Data de modificação inválida.')
 
+        local_date_time_str = request.form['localDateTime']
+        try:
+            # Aplica o fuso horário explicitamente como string
+            cuiaba_tz = pytz.timezone('America/Cuiaba')
+            data_atualizacao = cuiaba_tz.localize(datetime.fromisoformat(local_date_time_str)).strftime('%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            return jsonify(success=False, mensagem='Data de atualização local inválida.')
+
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
             try:
-                # Salva o arquivo
                 file.save(file_path)
-
-                # Converte a data e hora local para o fuso horário UTC-4 antes de enviar para o banco
-                data_atualizacao_local = datetime.now(local_timezone)
-
-                # Processa o arquivo carregado com a data de atualização e o ID do usuário logado
-                run_fip613(file_path, data_arquivo, db, user_id=current_user.id, data_atualizacao=data_atualizacao_local)
-
-                # Retorna resposta JSON para exibir modal de confirmação
+                run_fip613(file_path, data_arquivo, db, user_id=current_user.id, data_atualizacao=data_atualizacao)
                 return jsonify(success=True, mensagem='Relatório FIP 613 atualizado com sucesso!')
             except Exception as e:
                 print(f"Erro ao salvar ou processar o arquivo: {e}")
@@ -430,7 +423,6 @@ def executar_fip613():
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() == 'xlsx'
-
 
 @app.route('/iniciar_fip613', methods=['POST'])
 @login_required

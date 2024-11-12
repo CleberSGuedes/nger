@@ -9,7 +9,7 @@
     <title>Cadastro de Perfil</title>
 </head>
 <body>
-    <div class="containerlogin">
+    <div class="containerlogin"> <!-- Usando a classe containerlogin -->
         <h2>Cadastro de Perfil</h2>
         <form id="addProfileForm" method="POST">
             <div class="form-group">
@@ -32,9 +32,8 @@
     <script>
         document.getElementById('addProfileForm').addEventListener('submit', function(event) {
             event.preventDefault(); // Previne o envio padrão do formulário
-
-            // Envia o formulário via AJAX
             const formData = new FormData(this);
+
             fetch("{{ url_for('add_profile') }}", {
                 method: 'POST',
                 body: formData
@@ -47,15 +46,17 @@
             })
             .then(data => {
                 if (data.success) {
+                    // Exibe o modal de confirmação com a mensagem de sucesso
                     document.querySelector('#confirmationModal .modal-body p').textContent = data.mensagem;
-                    $('#confirmationModal').modal('show');  // Exibe o modal de confirmação em caso de sucesso
+                    $('#confirmationModal').modal('show');
                 } else {
-                    alert(data.mensagem || "Erro ao cadastrar perfil.");  // Exibe popup de alerta em caso de erro
+                    // Exibe a mensagem de erro no formato de popup
+                    alert(data.mensagem || "Erro ao cadastrar o perfil.");
                 }
             })
             .catch(error => {
                 console.error('Erro:', error);
-                alert("Erro ao cadastrar perfil.");
+                alert("Erro ao cadastrar o perfil.");
             });
         });
     </script>

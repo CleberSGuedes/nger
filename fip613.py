@@ -1,5 +1,4 @@
 import os
-import paramiko
 import pandas as pd
 from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError
@@ -13,7 +12,7 @@ sftp_password = "sua_senha"
 remote_folder_path = "/caminho/no/servidor"
 
 output_path = "fip613_limped.xlsx"
-BATCH_SIZE = 50
+BATCH_SIZE = 80
 
 def get_file_creation_date(file_path):
     """Obtém a data e hora de criação do arquivo."""
@@ -115,11 +114,9 @@ def save_clean_data(data, output_path):
         print(f"Erro ao salvar o arquivo limpo: {e}")
 
 def update_database(data, ano, data_arquivo, db, user_id, data_atualizacao):
-    """Insere os dados no banco de dados em lotes, incluindo ano, data_arquivo, user_id e data_atualizacao."""
     registros_gravados = 0
     print("Iniciando inserção dos registros no banco de dados em lotes...")
 
-    # Limpa a tabela se o arquivo de upload tiver uma data de modificação diferente do que está no banco
     db.session.execute(text("TRUNCATE TABLE fip613"))
     db.session.commit()
     print("Tabela fip613 truncada devido à nova data de modificação do arquivo.")
@@ -128,7 +125,7 @@ def update_database(data, ano, data_arquivo, db, user_id, data_atualizacao):
         batch_data = data.iloc[start:start + BATCH_SIZE]
         for _, row in batch_data.iterrows():
             try:
-                row['data_atualizacao'] = data_atualizacao  # Usa a data no fuso horário correto
+                row['data_atualizacao'] = data_atualizacao  # Usa a string para o horário local
                 row['ano'] = ano
                 row['data_arquivo'] = data_arquivo
                 row['user_id'] = user_id
@@ -181,13 +178,12 @@ def update_database(data, ano, data_arquivo, db, user_id, data_atualizacao):
             except SQLAlchemyError as e:
                 print(f"Erro ao inserir o registro: {str(e)}")
         
-        db.session.commit()  # Confirma o lote no banco
+        db.session.commit()
         print(f"{len(batch_data)} registros gravados no banco de dados no lote atual.")
     
     print(f"Total de registros gravados: {registros_gravados}")
 
 def run_fip613(file_path, data_arquivo, db, user_id, data_atualizacao):
-    """Função principal para executar todo o processo de atualização dos dados a partir de um arquivo fornecido."""
     ano = get_year_from_file(file_path)
     data = load_clean_data(file_path)
     
