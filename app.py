@@ -23,7 +23,7 @@ app = Flask(__name__)
 app.secret_key = 'guedes90'
 
 # Configurações do banco de dados
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:OXRlbi29015@10.100.50.69:3306/sistemanger'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:OXRlbi29015@177.87.122.164:3306/sistemanger'
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USERNAME'] = 'cleber.guedes@edu.mt.gov.br'

@@ -116,7 +116,7 @@ def process_ped_file(file_path, manual_date, user_id, data_atualizacao):
 
     # Conexão com o banco de dados
     engine = create_engine(
-        'mysql+pymysql://root:OXRlbi29015@10.100.50.69:3306/sistemanger',
+        'mysql+pymysql://root:OXRlbi29015@177.87.122.164:3306/sistemanger',
         isolation_level="AUTOCOMMIT",
         echo=False
     )
