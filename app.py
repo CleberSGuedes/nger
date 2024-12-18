@@ -1,20 +1,24 @@
+import os
+import secrets
 from flask import Flask, render_template, redirect, url_for, request, flash, session as flask_session, jsonify
+from flask import session
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import check_password_hash, generate_password_hash
 from flask_mail import Mail, Message
-from datetime import datetime, timedelta
-import pytz  # Import necessário para manipular fusos horários
-from sqlalchemy.orm import joinedload
-from sqlalchemy import func
-import os
-import secrets
-from uuid import uuid4
-from fip613 import run_fip613
 from werkzeug.utils import secure_filename
-import pandas as pd
+from werkzeug.security import check_password_hash, generate_password_hash
+from datetime import datetime, timedelta
+import pytz
+from dateutil import parser
+from models import Ped, Fip613
+from fip613 import run_fip613
+from uuid import uuid4
+from sqlalchemy.orm import joinedload
+from ped import process_ped_file
+from sqlalchemy import text
 
+# Configuração inicial
 app = Flask(__name__)
 app.secret_key = 'guedes90'
 
@@ -23,7 +27,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:OXRlbi29015@177.87
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USERNAME'] = 'cleber.guedes@edu.mt.gov.br'
-app.config['MAIL_PASSWORD'] = 'gnbs njed mvkm jwla'
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')  # Use uma variável de ambiente
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
 
@@ -31,7 +35,7 @@ app.config['MAIL_USE_SSL'] = True
 app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024 * 1024  # Limite de 1 GB
 
-# Garante que o diretório de upload existe
+# Criar o diretório de uploads, se não existir
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
@@ -45,6 +49,14 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = None
+
+# Validação de arquivos permitidos
+def allowed_file(filename):
+    """
+    Verifica se o arquivo tem uma extensão permitida.
+    """
+    allowed_extensions = {'xls', 'xlsx'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
 
 # Modelos
 class User(UserMixin, db.Model):
@@ -81,6 +93,7 @@ class Fip613(db.Model):
     data_arquivo = db.Column(db.DateTime, nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  # Registro do usuário que fez a última atualização
     user = db.relationship("User", backref="fip613_updates")
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -371,7 +384,7 @@ def consultar_perfil():
 def principal():
     return render_template('principal.html')
 
-# Atualizar Relatórios do Fiplan
+# Atualizar Relatórios do Fiplan FIP 613
 @app.route('/executar_fip613', methods=['GET', 'POST'])
 @login_required
 def executar_fip613():
@@ -434,10 +447,79 @@ def iniciar_fip613():
     except Exception as e:
         print(f"Erro ao executar o script: {e}")
         return jsonify(success=False, mensagem=f"Erro ao executar o script: {e}")
+    
+# Atualizar Relatórios do Fiplan PED
+@app.route('/executar_ped', methods=['GET', 'POST'])
+@login_required
+def executar_ped():
+    """
+    Rota para processar e atualizar os dados do arquivo PED.
+    """
+    # Consulta o último registro atualizado na tabela `ped`
+    latest_entry = db.session.execute(
+        text("""
+            SELECT ped.data_arquivo, ped.data_atualizacao, users.nome AS user_name
+            FROM ped
+            LEFT JOIN users ON ped.user_id = users.id
+            ORDER BY ped.data_atualizacao DESC
+            LIMIT 1
+        """)
+    ).fetchone()
 
-@app.route('/pagina_confirmacao')
-def pagina_confirmacao():
-    return render_template('partials/pagina_confirmacao.html', mensagem="Registro gravado com sucesso!")
+    latest_data_arquivo = latest_entry[0] if latest_entry else None
+    latest_data_atualizacao = latest_entry[1] if latest_entry else None
+    latest_user = latest_entry[2] if latest_entry else 'Desconhecido'
+
+    if request.method == 'POST':
+        # Validação: Verifica se o arquivo e a data estão presentes
+        if 'file' not in request.files or 'manualModifiedDate' not in request.form:
+            return jsonify(success=False, mensagem="Arquivo ou data de modificação ausentes.")
+
+        file = request.files['file']
+        if not allowed_file(file.filename):
+            return jsonify(success=False, mensagem="Formato de arquivo inválido. Use arquivos .xlsx.")
+
+        manual_date_str = request.form['manualModifiedDate']
+        try:
+            # Converte a data manual fornecida para datetime
+            data_arquivo = datetime.fromisoformat(manual_date_str)
+        except ValueError:
+            return jsonify(success=False, mensagem="Data de modificação inválida.")
+
+        # Captura a data/hora local com fuso horário correto
+        local_date_time = datetime.now(pytz.timezone('America/Cuiaba')).strftime('%Y-%m-%d %H:%M:%S')
+
+        # Garante um nome seguro para o arquivo
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+        # Salva o arquivo no diretório configurado
+        try:
+            file.save(file_path)
+        except Exception as e:
+            return jsonify(success=False, mensagem=f"Erro ao salvar o arquivo: {e}")
+
+        try:
+            # Processa o arquivo e retorna o total de registros inseridos ou atualizados
+            total_registros = process_ped_file(file_path, data_arquivo, current_user.id, local_date_time)
+            return jsonify(success=True, mensagem=f"PED processado com sucesso! Total de registros: {total_registros}.")
+        except Exception as e:
+            # Captura exceções do processamento
+            return jsonify(success=False, mensagem=f"Erro ao processar o arquivo: {e}")
+
+    # Renderiza o template com as informações do último processamento
+    return render_template(
+        'partials/atualizar_ped.html',
+        latest_data_arquivo=latest_data_arquivo,
+        latest_data_atualizacao=latest_data_atualizacao,
+        latest_user=latest_user
+    )
+
+def allowed_file(filename):
+    """
+    Valida se o arquivo possui a extensão permitida (.xlsx).
+    """
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() == 'xlsx'
 
 if __name__ == '__main__':
     with app.app_context():

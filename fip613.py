@@ -14,7 +14,7 @@ remote_folder_path = "/caminho/no/servidor"
 # Define o diretório e caminho absoluto para o arquivo de saída
 output_directory = os.path.join(os.getcwd(), "outputs")  # Usa uma pasta "outputs" para organizar melhor
 output_path = os.path.join(output_directory, "fip613_limped.xlsx")
-BATCH_SIZE = 80
+BATCH_SIZE = 100
 
 # Função para garantir que o diretório de saída existe
 def ensure_output_directory():

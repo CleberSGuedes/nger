@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Executar FIP613</title>
+    <title>Executar PED</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="containerlogin">
-        <h2>Atualizar FIP 613</h2><br>
+        <h2>Atualizar PED</h2><br>
         
         <p>Última data do arquivo: {{ latest_data_arquivo.strftime('%d/%m/%Y %H:%M:%S') if latest_data_arquivo else 'Não disponível' }}</p>
         <p>Relatório atualizado em: {{ latest_data_atualizacao.strftime('%d/%m/%Y %H:%M:%S') if latest_data_atualizacao else 'Não disponível' }}</p>
         <p>Atualizado por: {{ latest_user if latest_user else 'Desconhecido' }}</p>
 
         <form id="uploadForm" method="post" enctype="multipart/form-data">
-            <label for="file">Selecione o arquivo FIP613 em formato Excel (até 1 GB):</label>
+            <label for="file">Selecione o arquivo PED em formato Excel (até 1 GB):</label>
             <input type="file" name="file" id="file" required><br><br>
 
-            <label for="manualModifiedDate">Data de Download do Arquivo:</label>
+            <label for="manualModifiedDate">Data e Hora de Download do Arquivo:</label>
             <input type="datetime-local" id="manualModifiedDate" name="manualModifiedDate" required><br><br>
 
             <button type="submit" class="button">Upload e Atualizar</button>
@@ -44,21 +44,22 @@
         <script>
             document.getElementById('uploadForm').addEventListener('submit', function(event) {
                 event.preventDefault();
-        
+
                 const modifiedDateValue = document.getElementById('manualModifiedDate').value;
                 if (!modifiedDateValue) {
-                    alert("Por favor, insira a data de modificação do arquivo.");
+                    alert("Por favor, insira a data e hora de modificação do arquivo.");
                     return;
                 }
-        
-                // Obtém a data e hora local no formato correto
-                const localDateTime = new Date().toLocaleString("sv-SE", { timeZone: "America/Cuiaba" });
+
+                // Captura a data e hora local automaticamente
+                const localDateTimeValue = new Date().toISOString();
+
                 const formData = new FormData(this);
-                formData.append("localDateTime", localDateTime); // Adiciona data local no envio
-        
+                formData.append('localDateTime', localDateTimeValue);
+
                 $('#loadingModal').modal('show');
-        
-                fetch("{{ url_for('executar_fip613') }}", {
+
+                fetch("{{ url_for('executar_ped') }}", {
                     method: 'POST',
                     body: formData
                 })
@@ -66,8 +67,7 @@
                 .then(data => {
                     $('#loadingModal').modal('hide');
                     if (data.success) {
-                        document.querySelector('#confirmationModal .modal-body p').textContent = data.mensagem;
-                        $('#confirmationModal').modal('show');
+                        alert(data.mensagem);
                     } else {
                         alert(data.mensagem || "Erro ao executar o script.");
                     }
@@ -79,7 +79,6 @@
                 });
             });
         </script>
-        
     </div>
 </body>
 </html>
